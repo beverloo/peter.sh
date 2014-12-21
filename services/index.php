@@ -9,7 +9,7 @@ require_once __DIR__ . '/framework/ServiceManager.php';
 $serviceManager = new ServiceManager();
 $state = $serviceManager->queryServiceStates();
 
-$version = trim(file_get_contents(__DIR__ . '/VERSION'));
+$version = trim(file_get_contents(__DIR__ . '/../VERSION'));
 
 // Given the right "key" query parameter, tasks can be executed directly from the page.
 $key = array_key_exists('key', $_GET) ? $_GET['key'] : '';
@@ -88,7 +88,7 @@ foreach ($state['services'] as $data) {
     <footer>
       Curated by <a href="http://peter.sh/">Peter Beverloo</a>. This page lives in the <a href="http://creativecommons.org/publicdomain/zero/1.0/">public domain</a>.
       <aside>
-        <a href="https://github.com/beverloo/services.peter.sh"><?php echo substr($version, 0, 7); ?></a>
+        <a href="https://github.com/beverloo/peter.sh/tree/master/services"><?php echo substr($version, 0, 7); ?></a>
       </aside>
     </footer>
     <script>
