@@ -1,0 +1,86 @@
+html, body { margin: 0px; }
+
+body {
+  font-family: Arial;
+  font-size: 16px;
+  overflow-y: scroll;
+}
+
+h1 { margin-bottom: 10px; }
+h1 + div { margin-bottom: 15px; }
+
+#header {
+  background: linear-gradient(#bbb, #ddd);
+  border-bottom: 1px solid #bbb;
+  text-indent: 8px;
+  line-height: 30px;
+  height: 30px;
+  width: 100%;
+
+  position: fixed;
+}
+
+.toggle-visibility {
+  margin-right: 8px;
+  margin-top: 2px;
+  float: right;
+
+  background-color: white;
+  text-indent: 0px;
+  line-height: 1.2em;
+  padding: 2px 5px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#commits {
+  padding-top: 30px;
+}
+
+.commit { 
+  display: -webkit-flex;
+  display: flex;
+}
+
+.commit > div {
+  padding: 8px;
+}
+
+#commits.only-selected .commit:not(.selected) { display: none; }
+
+.revision { width: 80px; }
+.author { width: 220px; }
+.date { width: 120px; }
+
+.message { -webkit-flex: 1; white-space: pre-wrap; }
+.message a {
+  color: black;
+}
+
+.commit.revert, .commit.roll {
+  height: 54px;
+  color: #aaa;
+}
+
+.commit.revert .message, .commit.roll .message {
+  height: 2em;
+  overflow: hidden;
+}
+
+.commit:nth-child(even) {
+  background-color: #f6f6f6;
+}
+
+.commit.selected {
+  background-color: #ffe5e5;
+}
+
+.commit > div:first-child {
+  border-right: 1px solid #ccc;
+}
+
+.commit > div:nth-child(3) {
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+}

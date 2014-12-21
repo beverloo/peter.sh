@@ -1,0 +1,3 @@
+<Files selection.js>
+  AddHandler x-httpd-php5 js
+</Files>
