@@ -1,0 +1,12 @@
+header {
+    xbackground: url(/images/chromium.png) 16px 13px / 30px 30px no-repeat, #03a9f4;
+}
+
+/** Compact title for smaller screens **/
+@media (max-width: 655px) {
+    header > h1 { font-size: 0px; }
+    header > h1::after {
+        content: 'Chromium highlights';
+        font-size: 20px;
+    }
+}
