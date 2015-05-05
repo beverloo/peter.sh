@@ -26,7 +26,6 @@ $key = array_key_exists('key', $_GET) ? $_GET['key'] : '';
     <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
     <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
     <link rel="alternate" type="application/rss+xml" href="/?rss" />
-    <link rel="icon" href="/images/chromium.png" />
   </head>
   <body class="green">
     <header>
