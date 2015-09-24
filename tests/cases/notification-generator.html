@@ -61,9 +61,9 @@
             // Behavioral settings
             tag: ['tag', NotificationGenerator.FIELD_TYPE_STRING],
             vibrate: ['vibrate', NotificationGenerator.FIELD_TYPE_ARRAY],
-            renotify: ['renotify', NotificationGenerator.FIELD_TYPE_BOOL],
+            actions: ['actions', NotificationGenerator.FIELD_TYPE_BUTTONS],
             silent: ['silent', NotificationGenerator.FIELD_TYPE_BOOL],
-            noscreen: ['noscreen', NotificationGenerator.FIELD_TYPE_BOOL],
+            renotify: ['renotify', NotificationGenerator.FIELD_TYPE_BOOL],
             requireInteraction: ['require_interaction',
                                  NotificationGenerator.FIELD_TYPE_BOOL],
 
@@ -103,6 +103,11 @@
                 list.children[requirementId].style.display = 'none';
             });
           };
+
+          // Listen for messages received from the Service Worker.
+          navigator.serviceWorker.addEventListener('message', function(message) {
+            alert(message.data);
+          });
 
           generator.registerServiceWorker(location.pathname);
           generator.requestPermission();
@@ -147,7 +152,7 @@
             <input id="body_custom" type="text" />
           </li>
           <li>
-            <label for="direction">Direction</label>
+            <label for="direction" not-implemented title="Not implemented by Chrome.">Direction</label>
             <select id="direction">
               <option data-id="0" value="ltr">Left-to-right</option>
               <option data-id="1" value="rtl">Right-to-left</option>
@@ -198,8 +203,13 @@
             <input id="vibrate_custom" type="text" />
           </li>
           <li>
-            <label for="noscreen" not-implemented title="Not implemented by Chrome.">No-screen</label>
-            <input type="checkbox" id="noscreen" />
+            <label for="actions">Actions</label>
+            <select id="actions">
+              <option data-id="0" value="">No actions</option>
+              <option data-id="1" value="I am a button!">One action</option>
+              <option data-id="2" value="😁 Like;;😱 WTF">Two actions</option>
+              <option data-id="3" value="😸 Cat;;😂 Funny;;🙈 Monkey">Three actions</option>
+            </select>
           </li>
           <li>
             <label for="silent">Silent</label>
@@ -226,8 +236,9 @@
             <select id="action">
               <option data-id="0" value="default">Focus or open a new window.</option>
               <option data-id="1" value="focus-only">Only try to focus.</option>
-              <option data-id="1" value="open-only">Only open a new window.</option>
-              <option data-id="1" value="nothing">Do nothing.</option>
+              <option data-id="2" value="open-only">Only open a new window.</option>
+              <option data-id="3" value="message">Display an alert().</option>
+              <option data-id="4" value="nothing">Do nothing.</option>
             </select>
           </li>
           <li>

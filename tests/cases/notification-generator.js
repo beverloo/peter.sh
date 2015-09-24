@@ -48,6 +48,10 @@ NotificationGenerator.REQUIREMENT_SERVICE_WORKER = 1;
 NotificationGenerator.FIELD_TYPE_STRING = 0;
 NotificationGenerator.FIELD_TYPE_BOOL = 1;
 NotificationGenerator.FIELD_TYPE_ARRAY = 2;
+NotificationGenerator.FIELD_TYPE_BUTTONS = 3;
+
+NotificationGenerator.SEPARATOR_FIELD = ';;';
+NotificationGenerator.SEPARATOR_VALUE = '=';
 
 // Requests permission for notifications, and will mark the permission
 // requirement as satisfied once this has been granted by the user.
@@ -88,7 +92,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     switch (state[name].type) {
       case NotificationGenerator.FIELD_TYPE_ARRAY:
         if (!state[name].value.length)
-          return undefined;
+          return defaultValue;
 
         var pattern = [];
         state[name].value.split(',').forEach(function(chunk) {
@@ -96,6 +100,21 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
         });
 
         return pattern;
+      case NotificationGenerator.FIELD_TYPE_BUTTONS:
+        if (!state[name].value.length)
+          return defaultValue;
+
+        var buttons = state[name].value.split(NotificationGenerator.SEPARATOR_FIELD),
+            actions = [];
+
+        for (var index = 0; index < buttons.length; ++index) {
+          actions.push({
+            action: index,
+            title: buttons[index]
+          });
+        }
+
+        return actions;
       case NotificationGenerator.FIELD_TYPE_BOOL:
         return !!state[name].value;
       case NotificationGenerator.FIELD_TYPE_STRING:
@@ -117,8 +136,9 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     // sound
     vibrate: getField('vibrate', undefined),
     renotify: getField('renotify', false),
+    actions: getField('actions', undefined),
     silent: getField('silent', false),
-    noscreen: getField('noscreen', false),
+    // noscreen
     requireInteraction: getField('requireInteraction', false),
     sticky: getField('sticky', false),
 
@@ -211,9 +231,6 @@ NotificationGenerator.prototype.displayNonPersistent = function(title, options) 
     });
   });
 };
-
-NotificationGenerator.SEPARATOR_FIELD = ';;';
-NotificationGenerator.SEPARATOR_VALUE = '=';
 
 // Serializes |state| in a serialization that can be used in the hash part of
 // the URL. The separators mentioned above will be used in this serialization.

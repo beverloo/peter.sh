@@ -2,11 +2,13 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
-// Returns if |client| and |url| describe the same document.
-function sameDocument(client, url) {
-  console.log(client.url, url);
-  return client.url == url;
-}
+self.addEventListener('install', function(event) {
+  event.waitUntil(skipWaiting());
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(clients.claim());
+});
 
 self.addEventListener('notificationclick', function(event) {
   var notification = event.notification;
@@ -19,7 +21,7 @@ self.addEventListener('notificationclick', function(event) {
   // Close the notification if the setting has been set to do so.
 
   if (options.close)
-    notification.close();
+    event.notification.close();
 
   var promise = Promise.resolve();
 
@@ -41,13 +43,11 @@ self.addEventListener('notificationclick', function(event) {
   if (options.action == 'message') {
     clients.matchAll({ type: 'window' }).then(function(windowClients) {
       windowClients.forEach(function(client) {
-        if (!sameDocument(client, options.url))
-          return;
+        var message = 'Clicked on "' + notification.title + '"';
+        if (event.action)
+          message += ' (action "' + notification.actions[parseInt(event.action, 10)].title + '")';
 
-        client.postMessage({
-          title: notification.title,
-          options: options
-        });
+        client.postMessage(message);
       });
     });
 
@@ -56,12 +56,9 @@ self.addEventListener('notificationclick', function(event) {
 
   if (options.action == 'default' || options.action == 'focus-only') {
     promise =
-        promise.then(clients.matchAll({ type: 'window' }))
+        promise.then(function() { return clients.matchAll({ type: 'window' }); })
                .then(function(windowClients) {
                  windowClients.forEach(function(client) {
-                   if (!sameDocument(client, options.url))
-                     return;
-
                    client.focus();
                  });
                });
