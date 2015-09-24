@@ -1,6 +1,7 @@
 {
   "notification-generator.html": {
     "title": "Web Notification Generator",
-    "description": "A tool for dynamically creating Web Notifications."
+    "description": "A tool for dynamically creating Web Notifications.",
+    "manifest": "/notification-generator/notification-generator-manifest.json"
   }
 }

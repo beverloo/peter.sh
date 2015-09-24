@@ -9,6 +9,7 @@ $directory = __DIR__ . '/cases/';
 $tests = json_decode(file_get_contents(__DIR__ . '/cases.json'), true);
 
 $title = 'Collection of small test-cases and tools';
+$manifest = false;
 $file = false;
 
 if (strlen($_SERVER['REQUEST_URI']) > 1) {
@@ -17,6 +18,9 @@ if (strlen($_SERVER['REQUEST_URI']) > 1) {
 
   if (array_key_exists($requested_file, $tests)) {
     $title = $tests[$requested_file]['title'];
+    if (array_key_exists('manifest', $tests[$requested_file]))
+      $manifest = $tests[$requested_file]['manifest'];
+
     $file = $requested_file;
   }
 }
@@ -32,6 +36,10 @@ if (strlen($_SERVER['REQUEST_URI']) > 1) {
     <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
     <link rel="stylesheet" href="//static.peter.sh/style/mobile.css" media="screen and (max-device-width: 767px)" />
     <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
+<?php
+if ($manifest)
+  echo '    <link rel="manifest" href="' . $manifest . '" />' . PHP_EOL;
+?>
     <link rel="alternate" type="application/rss+xml" href="/?rss" />
     <style>
       h2 { text-indent: 0; }

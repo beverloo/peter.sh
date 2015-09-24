@@ -82,13 +82,14 @@ NotificationGenerator.prototype.requirementSatisfied = function(requirement) {
 // generator. Default values will be added where necessary.
 NotificationGenerator.prototype.createNotificationOptions = function(state) {
   function getField(name, defaultValue) {
-    console.log(state, name, defaultValue);
-
     if (!state.hasOwnProperty(name))
       return defaultValue;
 
     switch (state[name].type) {
       case NotificationGenerator.FIELD_TYPE_ARRAY:
+        if (!state[name].value.length)
+          return undefined;
+
         var pattern = [];
         state[name].value.split(',').forEach(function(chunk) {
           pattern.push(parseInt(chunk, 10));
@@ -114,7 +115,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     tag: getField('tag', ''),
     icon: getField('icon', ''),
     // sound
-    vibrate: getField('vibrate', []),
+    vibrate: getField('vibrate', undefined),
     renotify: getField('renotify', false),
     silent: getField('silent', false),
     noscreen: getField('noscreen', false),
