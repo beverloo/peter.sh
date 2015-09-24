@@ -1,4 +1,7 @@
 RewriteEngine On
 
 RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(notification\-generator)/(.+?)$ /cases/$2 [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^.*/$ /index.php [L,QSA]

@@ -2,24 +2,21 @@
 
 body {
     margin: 0px;
-    padding-top: 56px;
+    padding: 0px;
     background-color: #eeeeee;
     font-family: Roboto, sans-serif;
     font-size: 16px;
 }
 
 header {
-    position: fixed;
+    position: relative;
     width: 100%;
-    height: 56px;
     top: 0;
 }
 
 header > h1 {
-    text-indent: 72px;
-    line-height: 56px;
     font-size: 20px;
-    color: white;
+    color: #888888;
     margin: 0px;
 }
 

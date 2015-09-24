@@ -41,6 +41,8 @@ class RepositoryTracker extends Service {
                                           LIMIT
                                               1
                                       )
+            WHERE
+                tracking_projects.repository_ignore = 0
             ORDER BY
                 tracking_projects.project_name ASC');
 
@@ -95,8 +97,10 @@ class RepositoryTracker extends Service {
 
         $this->m_authors = $this->loadAuthors();
 
-        foreach ($projects as $project)
-            $this->updateProject($project);
+        foreach ($projects as $project) {
+            if (!$project['ignore'])
+                $this->updateProject($project);
+        }
     }
 
     // Synchronizes the status of |$project| using a live version of the repository, as defined in
@@ -318,6 +322,9 @@ class RepositoryTracker extends Service {
     // Loads a list of the new revisions which have landed since |$project.rev| happened. The actual
     // revisions will be loaded from a remote location.
     private function loadNewRevisions($project) {
+        if ($project == 1)
+            return array();
+
         $serviceUrl = Configuration::$chromiumRepoTool . '?repository=' . $project['path'];
         $logRequest = $serviceUrl . '&command=log&branch=' . $project['branch'] . '&since=' . $project['rev'];
 
@@ -368,6 +375,7 @@ class RepositoryTracker extends Service {
                 tracking_projects.project_name,
                 tracking_projects.project_path,
                 tracking_projects.project_branch,
+                tracking_projects.repository_ignore,
                 (
                     SELECT
                         tracking_revisions.revision_sha
@@ -396,8 +404,9 @@ class RepositoryTracker extends Service {
                 'id'        => $row['project_id'],
                 'name'      => $row['project_name'],
                 'path'      => $row['project_path'],
+                'ignore'    => $row['repository_ignore'],
                 'branch'    => $row['project_branch'],
-                'rev'       => $row['revision_sha']
+                'rev'       => $row['revision_sha'],
             );
         }
 

@@ -1,9 +1,243 @@
       <style>
+        .test-case { padding: 16px 0 1px 0; }
+        .test-case h2 { padding-top: 0px; }
         .test-case p { padding: 0 16px; }
+
+        /** Option lists **/
+        .test-case ol {
+          margin: 0 0 8px 0;
+          padding: 0 16px;
+        }
+
+        .test-case ol > li {
+          border-bottom: none;
+          padding: 0 0 8px 0;
+          height: 1.3em;
+          display: flex;
+        }
+
+        /** Option field **/
+        .test-case li > label {
+          width: 130px;
+        }
+
+        .test-case li > input,
+        .test-case li > select {
+          flex: 1;
+        }
+
+        .test-case li > input[type="checkbox"] {
+          margin-left: 0px;
+          flex: none;
+        }
+
+        /** Not-implemented warning **/
+        [not-implemented]::after {
+          content: ' ❗';
+          color: red;
+        }
+
+        .requirements {
+          margin: 0 0 8px 0;
+          padding-top: 8px; padding-bottom: 8px;
+          background-color: rgba(255, 0, 0, .1);
+        }
       </style>
-      <div class="test-case">
-        <h2>Settings for the notification</h2>
+      <script src="/cases/notification-generator.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var element = document.getElementById('test-case'),
+              generator = new NotificationGenerator(element);
+
+          generator.deserialize(document.location.hash);
+
+          generator.setFields({
+            // Visual settings
+            title: ['title', NotificationGenerator.FIELD_TYPE_STRING],
+            body: ['body', NotificationGenerator.FIELD_TYPE_STRING],
+            dir: ['direction', NotificationGenerator.FIELD_TYPE_STRING],
+            icon: ['icon', NotificationGenerator.FIELD_TYPE_STRING],
+
+            // Behavioral settings
+            tag: ['tag', NotificationGenerator.FIELD_TYPE_STRING],
+            vibrate: ['vibrate', NotificationGenerator.FIELD_TYPE_ARRAY],
+            renotify: ['renotify', NotificationGenerator.FIELD_TYPE_BOOL],
+            silent: ['silent', NotificationGenerator.FIELD_TYPE_BOOL],
+            noscreen: ['noscreen', NotificationGenerator.FIELD_TYPE_BOOL],
+            requireInteraction: ['require_interaction',
+                                 NotificationGenerator.FIELD_TYPE_BOOL],
+
+            // Reaction settings
+            action: ['action', NotificationGenerator.FIELD_TYPE_STRING],
+            close: ['close', NotificationGenerator.FIELD_TYPE_BOOL],
+          });
+
+          // Defines the behavior of the display button. It will be disabled
+          // when the notification is being displayed, and enabled again when
+          // that either succeeded, or an error occurred.
+          var displayButton = document.getElementById('action-display');
+          displayButton.addEventListener('click', function() {
+            displayButton.disabled = true;
+
+            generator.display().then(function() {
+              displayButton.disabled = false;
+            });
+          });
+
+          // The reset button allows the form to be reset to its initial values,
+          // which is implemented by refreshing the page.
+          var resetButton = document.getElementById('action-reset');
+          resetButton.addEventListener('click', function() {
+            document.location.href = document.location.pathname;
+          });
+
+          // Called when one or more of the requirements for the notification
+          // generator have been satisfied. The item will be removed from the list.
+          generator.onrequirementssatisfied = function(requirements) {
+            var list = document.getElementById('requirements');
+            if (list.children.length == requirements.length)
+              list.style.display = 'none';
+
+            requirements.forEach(function(requirementId) {
+              if (requirementId < list.children.length)
+                list.children[requirementId].style.display = 'none';
+            });
+          };
+
+          generator.registerServiceWorker(location.pathname);
+          generator.requestPermission();
+        });
+      </script>
+      <div id="test-case" class="test-case">
+        <ul id="requirements" class="requirements">
+          <li>Requires `notification` permission.</li>
+          <li>Unable to register the Service Worker.</li>
+        </ul>
+
+        <h2>Visual settings</h2>
+        <ol>
+          <li>
+            <label for="title">Title</label>
+            <select id="title">
+              <option data-id="0" value="Notification title">Short sentence (LTR)</option>
+              <option data-id="1" value="כותרת הודעה">Short sentence (RTL)</option>
+              <option data-id="2" value="Hamburgers: the cornerstone of any nutritious breakfast. Ch-cheeseburgers.">Long sentence (LTR)</option>
+              <option data-id="3" value="המבורגרים: אבן הפינה של כל ארוחת בוקר מזינה. צ'יזבורגר">Long sentence (RTL)</option>
+              <option data-id="4" value="sshhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh">Repetitive characters (LTR)</option>
+              <option data-id="5" value="שששששששששששששששששששששששששששששששששששששששששששששששששששש">Repetitive characters (RTL)</option>
+              <option data-id="6" value="😁🚒❤😹🙋⌛❇🚅☎☺">Unicode smileys</option>
+              <option data-id="7" value="">Empty</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="title_custom" type="text" />
+          </li>
+          <li>
+            <label for="body">Body</label>
+            <select id="body">
+              <option data-id="0" value="Notification content">One sentence (LTR)</option>
+              <option data-id="1" value="תוכן הודעה">One sentence (RTL)</option>
+              <option data-id="2" value="This is the notification's message. It may be able to stretch over multiple lines, or become visible when the notification is expanded by the user, depending on the notification center that's being used.">Multiple sentences (LTR)</option>
+              <option data-id="3" value="זהו המסר של ההודעה. זה עשוי להיות מסוגל למתוח על קווים מרובים, או להיות גלוי, כאשר ההודעה מורחבת על ידי המשתמש, בהתאם להודעה שהמרכז נמצא בשימוש">Multiple sentences (RTL)</option>
+              <option data-id="4" value="sshhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh">Repetitive characters (LTR)</option>
+              <option data-id="5" value="ששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששששש">Repetitive characters (RTL)</option>
+              <option data-id="6" value="🌇😃🍈😆🍜🍻😋⛅⛳😚">Unicode smileys</option>
+              <option data-id="7" value="">Empty</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="body_custom" type="text" />
+          </li>
+          <li>
+            <label for="direction">Direction</label>
+            <select id="direction">
+              <option data-id="0" value="ltr">Left-to-right</option>
+              <option data-id="1" value="rtl">Right-to-left</option>
+              <option data-id="2" value="auto">Auto</option>
+            </select>
+          </li>
+          <li>
+            <label for="icon">Icon</label>
+            <select id="icon">
+              <option data-id="0" value="/resources/icons/4.png">Normal PNG icon (256x256)</option>
+              <option data-id="1" value="/resources/icons/15.jpg">Normal JPEG icon (256x256)</option>
+              <option data-id="2" value="/resources/icons/16.gif">Static GIF icon (256x256)</option>
+              <option data-id="3" value="/resources/icons/19.gif">Animated GIF icon (256x256)</option>
+              <option data-id="4" value="">---------------</option>
+              <option data-id="5" value="/resources/icons/17.png">Tiny icon (PNG, 32x32)</option>
+              <option data-id="6" value="/resources/icons/18.png">Huge icon (PNG, 3333x5230)</option>
+              <option data-id="7" value="">No icon</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="icon_custom" type="text" />
+          </li>
+        </ol>
+
+        <h2>Behavioral settings</h2>
+        <ol>
+          <li>
+            <label for="tag">Tag</label>
+            <select id="tag">
+              <option data-id="0" value="">No tag</option>
+              <option data-id="1" value="tag-1">tag-1</option>
+              <option data-id="2" value="tag-2">tag-2</option>
+            </select>
+          </li>
+          <li>
+            <label for="vibrate">Vibration</label>
+            <!-- From https://gearside.com/custom-vibration-patterns-mobile-devices/ -->
+            <select id="vibrate">
+              <option data-id="0" value="">No vibration</option>
+              <option data-id="1" value="10000">Single long buzz</option>
+              <option data-id="2" value="100,50,100,50,100,50,100,50,100,50,100,50,100,50,100,50,100,50,100,50">Repetitive buzzing</option>
+              <option data-id="0" value="">---------------</option>
+              <option data-id="3" value="125,75,125,275,200,275,125,75,125,275,200,600,200,600">Super Mario</option>
+              <option data-id="4" value="500,110,500,110,450,110,200,110,170,40,450,110,200,110,170,40,500">Star Wars</option>
+              <option data-id="5" value="100,200,100,100,75,25,100,200,100,500,100,200,100,500">Shave and a Haircut</option>
+              <option data-id="6" value="0,300,100,50,100,50,100,50,100,50,100,50,100,50,150,150,150,450,100,50,100,50,150,150,150,450,100,50,100,50,150,150,150,450,150,150">Smooth Criminal</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="vibrate_custom" type="text" />
+          </li>
+          <li>
+            <label for="noscreen" not-implemented title="Not implemented by Chrome.">No-screen</label>
+            <input type="checkbox" id="noscreen" />
+          </li>
+          <li>
+            <label for="silent">Silent</label>
+            <input type="checkbox" id="silent" />
+          </li>
+          <li>
+            <label for="renotify" not-implemented title="Not implemented by Chrome.">Renotify</label>
+            <input type="checkbox" id="renotify" />
+          </li>
+          <li>
+            <label for="require_interaction">Req. interaction</label>
+            <input type="checkbox" id="require_interaction" />
+          </li>
+          <li>
+            <label for="sticky" not-implemented title="Not implemented by Chrome.">Sticky</label>
+            <input type="checkbox" id="sticky" />
+          </li>
+        </ol>
+
+        <h2>Reaction settings</h2>
+        <ol>
+          <li>
+            <label for="action">Action</label>
+            <select id="action">
+              <option data-id="0" value="default">Focus or open a new window.</option>
+              <option data-id="1" value="focus-only">Only try to focus.</option>
+              <option data-id="1" value="open-only">Only open a new window.</option>
+              <option data-id="1" value="nothing">Do nothing.</option>
+            </select>
+          </li>
+          <li>
+            <label for="close">Close it?</label>
+            <input type="checkbox" checked id="close" />
+          </li>
+        </ol>
+
         <p>
-          hi
+          <button id="action-reset">Reset</button>
+          <button id="action-display">Display the notification</button>
         </p>
       </div>

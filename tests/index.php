@@ -30,6 +30,7 @@ if (strlen($_SERVER['REQUEST_URI']) > 1) {
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,700,400italic" />
     <link rel="stylesheet" href="//static.peter.sh/style/layout.css" />
     <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/mobile.css" media="screen and (max-device-width: 767px)" />
     <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
     <link rel="alternate" type="application/rss+xml" href="/?rss" />
     <style>
