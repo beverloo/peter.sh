@@ -61,6 +61,8 @@
             // Behavioral settings
             tag: ['tag', NotificationGenerator.FIELD_TYPE_STRING],
             vibrate: ['vibrate', NotificationGenerator.FIELD_TYPE_ARRAY],
+            timestamp: ['timestamp',
+                        NotificationGenerator.FIELD_TYPE_TIME_OFFSET],
             actions: ['actions', NotificationGenerator.FIELD_TYPE_BUTTONS],
             silent: ['silent', NotificationGenerator.FIELD_TYPE_BOOL],
             renotify: ['renotify', NotificationGenerator.FIELD_TYPE_BOOL],
@@ -203,12 +205,26 @@
             <input id="vibrate_custom" type="text" />
           </li>
           <li>
+            <label for="timestamp">Timestamp</label>
+            <select id="timestamp">
+              <option data-id="0" value="">No custom timestamp</option>
+              <option data-id="1" value="-300000">Five minutes ago</option>
+              <option data-id="2" value="-604800000">Last week</option>
+              <option data-id="3" value="+600000">Ten minutes from now</option>
+              <option data-id="4" value="+86400000">Tomorrow</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="timestamp_custom" type="text" />
+          </li>
+          <li>
             <label for="actions">Actions</label>
             <select id="actions">
               <option data-id="0" value="">No actions</option>
-              <option data-id="1" value="I am a button!">One action</option>
-              <option data-id="2" value="😁 Like;;😱 WTF">Two actions</option>
-              <option data-id="3" value="😸 Cat;;😂 Funny;;🙈 Monkey">Three actions</option>
+              <option data-id="1" value="I am a button!">One action (LTR)</option>
+              <option data-id="2" value="טקסט קצר">One action (RTL)</option>
+              <option data-id="3" value="😁 Like;;😱 WTF">Two actions (LTR)</option>
+              <option data-id="4" value="טקסט קצר;;טקסט זה הוא ארוך עבור לחצן">Two actions (RTL)</option>
+              <option data-id="5" value="😸 Cat;;😂 Funny;;🙈 Monkey">Three actions</option>
             </select>
           </li>
           <li>

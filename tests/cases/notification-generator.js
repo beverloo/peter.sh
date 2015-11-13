@@ -49,6 +49,7 @@ NotificationGenerator.FIELD_TYPE_STRING = 0;
 NotificationGenerator.FIELD_TYPE_BOOL = 1;
 NotificationGenerator.FIELD_TYPE_ARRAY = 2;
 NotificationGenerator.FIELD_TYPE_BUTTONS = 3;
+NotificationGenerator.FIELD_TYPE_TIME_OFFSET = 4;
 
 NotificationGenerator.SEPARATOR_FIELD = ';;';
 NotificationGenerator.SEPARATOR_VALUE = '=';
@@ -115,6 +116,14 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
         }
 
         return actions;
+      case NotificationGenerator.FIELD_TYPE_TIME_OFFSET:
+        if (!state[name].value.length)
+          return defaultValue;
+
+        var currentTime = Date.now(),
+            givenTime = parseInt(state[name].value);
+
+        return currentTime + givenTime;
       case NotificationGenerator.FIELD_TYPE_BOOL:
         return !!state[name].value;
       case NotificationGenerator.FIELD_TYPE_STRING:
@@ -135,6 +144,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     icon: getField('icon', ''),
     // sound
     vibrate: getField('vibrate', undefined),
+    timestamp: getField('timestamp', undefined),
     renotify: getField('renotify', false),
     actions: getField('actions', undefined),
     silent: getField('silent', false),
