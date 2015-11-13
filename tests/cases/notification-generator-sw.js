@@ -2,6 +2,12 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
+function firstWindowClient() {
+  return clients.matchAll({ type: 'window' }).then(function(windowClients) {
+    return windowClients.length ? windowClients[0] : null;
+  });
+}
+
 self.addEventListener('install', function(event) {
   event.waitUntil(skipWaiting());
 });
@@ -41,14 +47,15 @@ self.addEventListener('notificationclick', function(event) {
   //
 
   if (options.action == 'message') {
-    clients.matchAll({ type: 'window' }).then(function(windowClients) {
-      windowClients.forEach(function(client) {
-        var message = 'Clicked on "' + notification.title + '"';
-        if (event.action)
-          message += ' (action "' + notification.actions[parseInt(event.action, 10)].title + '")';
+    firstWindowClient().then(function(client) {
+      if (!client)
+        return;
 
-        client.postMessage(message);
-      });
+      var message = 'Clicked on "' + notification.title + '"';
+      if (event.action)
+        message += ' (action "' + notification.actions[parseInt(event.action, 10)].title + '")';
+
+      client.postMessage(message);
     });
 
     return;
@@ -56,11 +63,10 @@ self.addEventListener('notificationclick', function(event) {
 
   if (options.action == 'default' || options.action == 'focus-only') {
     promise =
-        promise.then(function() { return clients.matchAll({ type: 'window' }); })
-               .then(function(windowClients) {
-                 windowClients.forEach(function(client) {
-                   client.focus();
-                 });
+        promise.then(function() { return firstWindowClient(); })
+               .then(function(client) {
+                 if (client)
+                  client.focus();
                });
   }
 
