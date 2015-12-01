@@ -53,7 +53,7 @@ self.addEventListener('notificationclick', function(event) {
 
       var message = 'Clicked on "' + notification.title + '"';
       if (event.action)
-        message += ' (action "' + notification.actions[parseInt(event.action, 10)].title + '")';
+        message += ' (action "' + event.action + '")';
 
       client.postMessage(message);
     });
