@@ -12,6 +12,21 @@ if (!Array.prototype.hasOwnProperty('includes')) {
   };
 }
 
+// Returns the value of |element|.
+function getElementValue(element) {
+  switch (element.tagName) {
+    case 'SELECT':
+      var value = element.options[element.selectedIndex].value;
+      if (value.indexOf(';') == 1)
+        return value.substr(2);
+      return value;
+    case 'INPUT':
+      return element.value;
+  }
+
+  return undefined;
+}
+
 // Base for features that have one or more requirements that have to be
 // satisfied before the feature itself can be used.
 function RequirementsBase(requirementsElement) {
@@ -71,4 +86,173 @@ RequirementsBase.prototype.requirementsChanged = function() {
 
     this.requirementsElement_.appendChild(listItem);
   }
+};
+
+// Base for features that can generate settings from one or more fields. The
+// serialization, deserialization and registration of fields will be managed by
+// the common code, whereas applying the fields will be done by the user.
+function GeneratorBase(requirementsElement) {
+  RequirementsBase.call(this, requirementsElement);
+
+  this.fields_ = {};
+  this.serialized_state_ = {};
+}
+
+GeneratorBase.prototype = Object.create(RequirementsBase.prototype);
+
+GeneratorBase.FIELD_TYPE_STRING = 0;
+GeneratorBase.FIELD_TYPE_BOOL = 1;
+GeneratorBase.FIELD_TYPE_ARRAY = 2;
+GeneratorBase.FIELD_TYPE_BUTTONS = 3;
+GeneratorBase.FIELD_TYPE_TIME_OFFSET = 4;
+
+GeneratorBase.SEPARATOR_FIELD = ';;';
+GeneratorBase.SEPARATOR_VALUE = '=';
+
+GeneratorBase.prototype.serialize = function(state) {
+  var serialization = [];
+  Object.keys(state).forEach(function(name) {
+    var value = state[name].index !== undefined ? state[name].index
+                                                : state[name].value;
+
+    serialization.push(name + GeneratorBase.SEPARATOR_VALUE + value);
+  });
+
+  return serialization.join(GeneratorBase.SEPARATOR_FIELD);
+};
+
+GeneratorBase.prototype.deserialize = function(serialization) {
+  if (!serialization.startsWith('#'))
+    return;
+
+  serialization = serialization.substr(1);
+
+  var fields = serialization.split(GeneratorBase.SEPARATOR_FIELD),
+      self = this;
+
+  fields.forEach(function(field) {
+    var valueIndex = field.indexOf(GeneratorBase.SEPARATOR_VALUE);
+    if (valueIndex == -1)
+      return;
+
+    self.serialized_state_[field.substr(0, valueIndex)] =
+        field.substr(valueIndex + 1);
+  });
+};
+
+GeneratorBase.prototype.setFields = function(fields) {
+  var self = this;
+  Object.keys(fields).forEach(function(key) {
+    var settings = fields[key];
+
+    self.fields_[key] = {
+      element: self.element_.querySelector('#' + settings[0]),
+      elementCustom: self.element_.querySelector('#' + settings[0] + '_custom'),
+      type: settings[1]
+    };
+
+    self.initializeField(key);
+  });
+};
+
+GeneratorBase.prototype.initializeField = function(name) {
+  var field = this.fields_[name],
+      self = this;
+
+  field.defaultValue = '';
+  if (field.element.tagName == 'SELECT') {
+    field.defaultValue =
+        field.element.options[field.element.selectedIndex].getAttribute('data-id');
+  } else if (field.element.type == 'checkbox') {
+    field.defaultValue = field.element.checked;
+  }
+
+  // Listen for value changes so that the custom element can be displayed or
+  // hidden on demand. (If the "custom" value is present in the field.)
+  field.element.addEventListener('change', function() {
+    if (!field.elementCustom)
+      return;
+
+    if (getElementValue(field.element) == 'custom')
+      field.elementCustom.style.display = 'initial';
+    else
+      field.elementCustom.style.display = 'none';
+  });
+
+  var hasCustomValue = false;
+
+  // If a deserialized value for this field has been stored, try to select the
+  // intended value in the element.
+  if (this.serialized_state_.hasOwnProperty(name)) {
+    var value = this.serialized_state_[name];
+    switch (field.element.tagName) {
+      case 'INPUT':
+        if (field.element.type == 'checkbox')
+          field.element.checked = value === 'true' || value === '1';
+        else
+          field.element.value = value;
+        break;
+      case 'SELECT':
+        if (option = field.element.querySelector('[data-id="' + value + '"]'))
+          field.element.selectedIndex = option.index;
+        else if (field.elementCustom) {
+          if (option = field.element.querySelector('[data-custom]'))
+            field.element.selectedIndex = option.index;
+
+          field.elementCustom.value = value;
+          hasCustomValue = true;
+        }
+        break;
+    }
+  }
+
+  // Hide the custom element by default unless a value has been deserialized.
+  if (field.elementCustom && !hasCustomValue)
+    field.elementCustom.style.display = 'none';
+};
+
+GeneratorBase.prototype.resolveFieldState = function(name) {
+  var field = this.fields_[name],
+      index = undefined,
+      value = undefined;
+
+  switch (field.element.tagName) {
+    case 'INPUT':
+      if (field.element.type == 'checkbox')
+        value = field.element.checked;
+      else
+        value = field.element.value;
+      break;
+    case 'SELECT':
+      var option = field.element.options[field.element.selectedIndex];
+      if (option.hasAttribute('data-custom') && field.elementCustom) {
+        value = field.elementCustom.value;
+      } else {
+        index = option.index;
+        value = option.value;
+      }
+      break;
+  }
+
+  return { index: index, value: value, type: field.type };
+};
+
+GeneratorBase.prototype.computeState = function(include_default) {
+  var self = this,
+      state = {};
+
+  // Iterate over each of the fields and resolve their value.
+  Object.keys(this.fields_).forEach(function(name) {
+    var defaultValue = self.fields_[name].defaultValue,
+        fieldState = self.resolveFieldState(name);
+
+    if (((fieldState.index !== undefined && fieldState.index == defaultValue) ||
+         (fieldState.value == defaultValue)) && !include_default)
+      return;
+
+    // TODO: Check for the default value if |include_default|.
+    state[name] = fieldState;
+  });
+
+  return state;
 };

@@ -17,25 +17,25 @@
           generator.deserialize(document.location.hash);
           generator.setFields({
             // Visual settings
-            title: ['title', NotificationGenerator.FIELD_TYPE_STRING],
-            body: ['body', NotificationGenerator.FIELD_TYPE_STRING],
-            dir: ['direction', NotificationGenerator.FIELD_TYPE_STRING],
-            icon: ['icon', NotificationGenerator.FIELD_TYPE_STRING],
+            title: ['title', GeneratorBase.FIELD_TYPE_STRING],
+            body: ['body', GeneratorBase.FIELD_TYPE_STRING],
+            dir: ['direction', GeneratorBase.FIELD_TYPE_STRING],
+            icon: ['icon', GeneratorBase.FIELD_TYPE_STRING],
 
             // Behavioral settings
-            tag: ['tag', NotificationGenerator.FIELD_TYPE_STRING],
-            vibrate: ['vibrate', NotificationGenerator.FIELD_TYPE_ARRAY],
+            tag: ['tag', GeneratorBase.FIELD_TYPE_STRING],
+            vibrate: ['vibrate', GeneratorBase.FIELD_TYPE_ARRAY],
             timestamp: ['timestamp',
-                        NotificationGenerator.FIELD_TYPE_TIME_OFFSET],
-            actions: ['actions', NotificationGenerator.FIELD_TYPE_BUTTONS],
-            silent: ['silent', NotificationGenerator.FIELD_TYPE_BOOL],
-            renotify: ['renotify', NotificationGenerator.FIELD_TYPE_BOOL],
+                        GeneratorBase.FIELD_TYPE_TIME_OFFSET],
+            actions: ['actions', GeneratorBase.FIELD_TYPE_BUTTONS],
+            silent: ['silent', GeneratorBase.FIELD_TYPE_BOOL],
+            renotify: ['renotify', GeneratorBase.FIELD_TYPE_BOOL],
             requireInteraction: ['require_interaction',
-                                 NotificationGenerator.FIELD_TYPE_BOOL],
+                                 GeneratorBase.FIELD_TYPE_BOOL],
 
             // Reaction settings
-            action: ['action', NotificationGenerator.FIELD_TYPE_STRING],
-            close: ['close', NotificationGenerator.FIELD_TYPE_BOOL],
+            action: ['action', GeneratorBase.FIELD_TYPE_STRING],
+            close: ['close', GeneratorBase.FIELD_TYPE_BOOL],
           });
 
           // Defines the behavior of the display button. It will be disabled

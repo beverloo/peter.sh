@@ -2,27 +2,10 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
-// Returns the value of |element|.
-function getElementValue(element) {
-  switch (element.tagName) {
-    case 'SELECT':
-      var value = element.options[element.selectedIndex].value;
-      if (value.indexOf(';') == 1)
-        return value.substr(2);
-      return value;
-    case 'INPUT':
-      return element.value;
-  }
-
-  return undefined;
-}
-
 function NotificationGenerator(requirementsElement, element) {
-  RequirementsBase.call(this, requirementsElement);
+  GeneratorBase.call(this, requirementsElement);
 
   this.element_ = element;
-  this.fields_ = {};
-  this.serialized_state_ = {};
 
   this.addRequirement(NotificationGenerator.REQUIREMENT_PERMISSION,
                       'Requires permission to display notifications.');
@@ -30,19 +13,10 @@ function NotificationGenerator(requirementsElement, element) {
                       'Requires the Service Worker to be registered.');
 }
 
-NotificationGenerator.prototype = Object.create(RequirementsBase.prototype);
+NotificationGenerator.prototype = Object.create(GeneratorBase.prototype);
 
 NotificationGenerator.REQUIREMENT_PERMISSION = 0;
 NotificationGenerator.REQUIREMENT_SERVICE_WORKER = 1;
-
-NotificationGenerator.FIELD_TYPE_STRING = 0;
-NotificationGenerator.FIELD_TYPE_BOOL = 1;
-NotificationGenerator.FIELD_TYPE_ARRAY = 2;
-NotificationGenerator.FIELD_TYPE_BUTTONS = 3;
-NotificationGenerator.FIELD_TYPE_TIME_OFFSET = 4;
-
-NotificationGenerator.SEPARATOR_FIELD = ';;';
-NotificationGenerator.SEPARATOR_VALUE = '=';
 
 // Requests permission for notifications, and will mark the permission
 // requirement as satisfied once this has been granted by the user.
@@ -75,7 +49,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
       return defaultValue;
 
     switch (state[name].type) {
-      case NotificationGenerator.FIELD_TYPE_ARRAY:
+      case GeneratorBase.FIELD_TYPE_ARRAY:
         if (!state[name].value.length)
           return defaultValue;
 
@@ -85,11 +59,11 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
         });
 
         return pattern;
-      case NotificationGenerator.FIELD_TYPE_BUTTONS:
+      case GeneratorBase.FIELD_TYPE_BUTTONS:
         if (!state[name].value.length)
           return defaultValue;
 
-        var buttons = state[name].value.split(NotificationGenerator.SEPARATOR_FIELD),
+        var buttons = state[name].value.split(GeneratorBase.SEPARATOR_FIELD),
             actions = [];
 
         for (var index = 0; index < buttons.length; ++index) {
@@ -100,7 +74,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
         }
 
         return actions;
-      case NotificationGenerator.FIELD_TYPE_TIME_OFFSET:
+      case GeneratorBase.FIELD_TYPE_TIME_OFFSET:
         if (!state[name].value.length)
           return defaultValue;
 
@@ -108,9 +82,9 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
             givenTime = parseInt(state[name].value);
 
         return currentTime + givenTime;
-      case NotificationGenerator.FIELD_TYPE_BOOL:
+      case GeneratorBase.FIELD_TYPE_BOOL:
         return !!state[name].value;
-      case NotificationGenerator.FIELD_TYPE_STRING:
+      case GeneratorBase.FIELD_TYPE_STRING:
         return state[name].value;
     }
 
@@ -203,166 +177,4 @@ NotificationGenerator.prototype.displayNonPersistent = function(title, options) 
       resolve();
     });
   });
-};
-
-// Serializes |state| in a serialization that can be used in the hash part of
-// the URL. The separators mentioned above will be used in this serialization.
-NotificationGenerator.prototype.serialize = function(state) {
-  var serialization = [];
-  Object.keys(state).forEach(function(name) {
-    var value = state[name].index !== undefined ? state[name].index
-                                                : state[name].value;
-
-    serialization.push(name + NotificationGenerator.SEPARATOR_VALUE + value);
-  });
-
-  return serialization.join(NotificationGenerator.SEPARATOR_FIELD);
-};
-
-// Deserializes the state from |serialization|, usually the hash from the URL.
-// Values in the serialization set to the default value will be ignored.
-NotificationGenerator.prototype.deserialize = function(serialization) {
-  if (!serialization.startsWith('#'))
-    return;
-
-  serialization = serialization.substr(1);
-
-  var fields = serialization.split(NotificationGenerator.SEPARATOR_FIELD),
-      self = this;
-
-  fields.forEach(function(field) {
-    var valueIndex = field.indexOf(NotificationGenerator.SEPARATOR_VALUE);
-    if (valueIndex == -1)
-      return;
-
-    self.serialized_state_[field.substr(0, valueIndex)] =
-        field.substr(valueIndex + 1);
-  });
-};
-
-// Initializes the fields for the notification generator as |fields|. It must
-// be an object mapping the property name on the Notification object to an array
-// of the element id that contains its value, and the type of data it contains.
-NotificationGenerator.prototype.setFields = function(fields) {
-  var self = this;
-  Object.keys(fields).forEach(function(key) {
-    var settings = fields[key];
-
-    self.fields_[key] = {
-      element: self.element_.querySelector('#' + settings[0]),
-      elementCustom: self.element_.querySelector('#' + settings[0] + '_custom'),
-      type: settings[1]
-    };
-
-    self.initializeField(key);
-  });
-};
-
-// Initializes the field named |name|. All data will be known to the local
-// class, so we need to determine the default value, and either hide or set
-// the custom field depending on whether data has been deserialized.
-NotificationGenerator.prototype.initializeField = function(name) {
-  var field = this.fields_[name],
-      self = this;
-
-  field.defaultValue = '';
-  if (field.element.tagName == 'SELECT') {
-    field.defaultValue =
-        field.element.options[field.element.selectedIndex].getAttribute('data-id');
-  } else if (field.element.type == 'checkbox') {
-    field.defaultValue = field.element.checked;
-  }
-
-  // Listen for value changes so that the custom element can be displayed or
-  // hidden on demand. (If the "custom" value is present in the field.)
-  field.element.addEventListener('change', function() {
-    if (!field.elementCustom)
-      return;
-
-    if (getElementValue(field.element) == 'custom')
-      field.elementCustom.style.display = 'initial';
-    else
-      field.elementCustom.style.display = 'none';
-  });
-
-  var hasCustomValue = false;
-
-  // If a deserialized value for this field has been stored, try to select the
-  // intended value in the element.
-  if (this.serialized_state_.hasOwnProperty(name)) {
-    var value = this.serialized_state_[name];
-    switch (field.element.tagName) {
-      case 'INPUT':
-        if (field.element.type == 'checkbox')
-          field.element.checked = value === 'true' || value === '1';
-        else
-          field.element.value = value;
-        break;
-      case 'SELECT':
-        if (option = field.element.querySelector('[data-id="' + value + '"]'))
-          field.element.selectedIndex = option.index;
-        else if (field.elementCustom) {
-          if (option = field.element.querySelector('[data-custom]'))
-            field.element.selectedIndex = option.index;
-
-          field.elementCustom.value = value;
-          hasCustomValue = true;
-        }
-        break;
-    }
-  }
-
-  // Hide the custom element by default unless a value has been deserialized.
-  if (field.elementCustom && !hasCustomValue)
-    field.elementCustom.style.display = 'none';
-};
-
-// Resolves the state of the field named |name|. It will check the immediate
-// input field, and the custom one if that is supported.
-NotificationGenerator.prototype.resolveFieldState = function(name) {
-  var field = this.fields_[name],
-      index = undefined,
-      value = undefined;
-
-  switch (field.element.tagName) {
-    case 'INPUT':
-      if (field.element.type == 'checkbox')
-        value = field.element.checked;
-      else
-        value = field.element.value;
-      break;
-    case 'SELECT':
-      var option = field.element.options[field.element.selectedIndex];
-      if (option.hasAttribute('data-custom') && field.elementCustom) {
-        value = field.elementCustom.value;
-      } else {
-        index = option.index;
-        value = option.value;
-      }
-      break;
-  }
-
-  return { index: index, value: value, type: field.type };
-};
-
-// Computes the current state of the form fields. Will either include or omit
-// fields with a default value depending on the value of |include_default|.
-NotificationGenerator.prototype.computeState = function(include_default) {
-  var self = this,
-      state = {};
-
-  // Iterate over each of the fields and resolve their value.
-  Object.keys(this.fields_).forEach(function(name) {
-    var defaultValue = self.fields_[name].defaultValue,
-        fieldState = self.resolveFieldState(name);
-
-    if (((fieldState.index !== undefined && fieldState.index == defaultValue) ||
-         (fieldState.value == defaultValue)) && !include_default)
-      return;
-
-    // TODO: Check for the default value if |include_default|.
-    state[name] = fieldState;
-  });
-
-  return state;
 };

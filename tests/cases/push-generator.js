@@ -3,7 +3,7 @@
 // be found in the LICENSE file.
 
 function PushGenerator(requirementsElement) {
-  RequirementsBase.call(this, requirementsElement);
+  GeneratorBase.call(this, requirementsElement);
 
   this.addRequirement(PushGenerator.REQUIREMENT_PERMISSION,
                       'Requires permission to display notifications.');
@@ -17,7 +17,7 @@ PushGenerator.REQUIREMENT_PERMISSION = 0;
 PushGenerator.REQUIREMENT_SERVICE_WORKER = 1;
 PushGenerator.REQUIREMENT_SUBSCRIPTION = 2;
 
-PushGenerator.prototype = Object.create(RequirementsBase.prototype);
+PushGenerator.prototype = Object.create(GeneratorBase.prototype);
 
 PushGenerator.prototype.registerServiceWorker = function(scope) {
   navigator.serviceWorker.register(scope + 'push-generator-sw.js', { scope: scope }).catch(function(error) {
