@@ -13,76 +13,28 @@ NotificationGenerator.prototype = Object.create(NotificationGeneratorBase.protot
 // Creates the NotificationOptions dictionary based on the options in the
 // generator. Default values will be added where necessary.
 NotificationGenerator.prototype.createNotificationOptions = function(state) {
-  function getField(name, defaultValue) {
-    if (!state.hasOwnProperty(name))
-      return defaultValue;
-
-    switch (state[name].type) {
-      case GeneratorBase.FIELD_TYPE_ARRAY:
-        if (!state[name].value.length)
-          return defaultValue;
-
-        var pattern = [];
-        state[name].value.split(',').forEach(function(chunk) {
-          pattern.push(parseInt(chunk, 10));
-        });
-
-        return pattern;
-      case GeneratorBase.FIELD_TYPE_BUTTONS:
-        if (!state[name].value.length)
-          return defaultValue;
-
-        var buttons = state[name].value.split(GeneratorBase.SEPARATOR_FIELD),
-            actions = [];
-
-        for (var index = 0; index < buttons.length; ++index) {
-          actions.push({
-            action: index,
-            title: buttons[index]
-          });
-        }
-
-        return actions;
-      case GeneratorBase.FIELD_TYPE_TIME_OFFSET:
-        if (!state[name].value.length)
-          return defaultValue;
-
-        var currentTime = Date.now(),
-            givenTime = parseInt(state[name].value);
-
-        return currentTime + givenTime;
-      case GeneratorBase.FIELD_TYPE_BOOL:
-        return !!state[name].value;
-      case GeneratorBase.FIELD_TYPE_STRING:
-        return state[name].value;
-    }
-
-    // This should never be reached, as the switch() handles all cases.
-    return defaultValue;
-  }
-
   // Note that the default values match those in the spec:
   // https://notifications.spec.whatwg.org/#dictdef-notificationoptions
   return {
-    dir: getField('dir', 'auto'),
+    dir: this.getField(state, 'dir', 'auto'),
     // lang
-    body: getField('body', ''),
-    tag: getField('tag', ''),
-    icon: getField('icon', ''),
+    body: this.getField(state, 'body', ''),
+    tag: this.getField(state, 'tag', ''),
+    icon: this.getField(state, 'icon', ''),
     // sound
-    vibrate: getField('vibrate', undefined),
-    timestamp: getField('timestamp', undefined),
-    renotify: getField('renotify', false),
-    actions: getField('actions', undefined),
-    silent: getField('silent', false),
+    vibrate: this.getField(state, 'vibrate', undefined),
+    timestamp: this.getField(state, 'timestamp', undefined),
+    renotify: this.getField(state, 'renotify', false),
+    actions: this.getField(state, 'actions', undefined),
+    silent: this.getField(state, 'silent', false),
     // noscreen
-    requireInteraction: getField('requireInteraction', false),
-    sticky: getField('sticky', false),
+    requireInteraction: this.getField(state, 'requireInteraction', false),
+    sticky: this.getField(state, 'sticky', false),
 
     data: {
       options: {
-        action: getField('action', 'default'),
-        close: getField('close', true),
+        action: this.getField(state, 'action', 'default'),
+        close: this.getField(state, 'close', true),
 
         url: document.location.toString(),
       }

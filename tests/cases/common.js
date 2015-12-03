@@ -211,6 +211,54 @@ GeneratorBase.prototype.initializeField = function(name) {
     field.elementCustom.style.display = 'none';
 };
 
+GeneratorBase.prototype.getField = function(state, name, defaultValue) {
+  if (!state.hasOwnProperty(name))
+    return defaultValue;
+
+  switch (state[name].type) {
+    case GeneratorBase.FIELD_TYPE_ARRAY:
+      if (!state[name].value.length)
+        return defaultValue;
+
+      var pattern = [];
+      state[name].value.split(',').forEach(function(chunk) {
+        pattern.push(parseInt(chunk, 10));
+      });
+
+      return pattern;
+    case GeneratorBase.FIELD_TYPE_BUTTONS:
+      if (!state[name].value.length)
+        return defaultValue;
+
+      var buttons = state[name].value.split(GeneratorBase.SEPARATOR_FIELD),
+          actions = [];
+
+      for (var index = 0; index < buttons.length; ++index) {
+        actions.push({
+          action: index,
+          title: buttons[index]
+        });
+      }
+
+      return actions;
+    case GeneratorBase.FIELD_TYPE_TIME_OFFSET:
+      if (!state[name].value.length)
+        return defaultValue;
+
+      var currentTime = Date.now(),
+          givenTime = parseInt(state[name].value);
+
+      return currentTime + givenTime;
+    case GeneratorBase.FIELD_TYPE_BOOL:
+      return !!state[name].value;
+    case GeneratorBase.FIELD_TYPE_STRING:
+      return state[name].value;
+  }
+
+  // This should never be reached, as the switch() handles all cases.
+  return defaultValue;
+};
+
 GeneratorBase.prototype.resolveFieldState = function(name) {
   var field = this.fields_[name],
       index = undefined,
