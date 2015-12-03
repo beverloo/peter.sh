@@ -6,7 +6,7 @@
       <script>
         document.addEventListener('DOMContentLoaded', function() {
           var requirementsElement = document.getElementById('requirements'),
-              element = document.getElementById('test-case');
+              element = document.getElementById('test-case').parentNode.parentNode;
 
           var generator = new PushGenerator(requirementsElement, element);
           generator.deserialize(document.location.hash);
@@ -14,13 +14,19 @@
             // Subscription settings
             authentication: ['authentication', GeneratorBase.FIELD_TYPE_STRING],
             source: ['source', GeneratorBase.FIELD_TYPE_STRING],
-            userVisibleOnly: ['userVisibleOnly', GeneratorBase.FIELD_TYPE_BOOL]
+            userVisibleOnly: ['userVisibleOnly', GeneratorBase.FIELD_TYPE_BOOL],
+
+            // Message settings
+            protocol: ['protocol', GeneratorBase.FIELD_TYPE_STRING],
+            payload: ['payload', GeneratorBase.FIELD_TYPE_STRING],
+            encryption: ['encryption', GeneratorBase.FIELD_TYPE_STRING]
           });
 
           generator.setActionElements(
               /* unsubscribe */ document.getElementById('action-unsubscribe'),
               /* subscribe */   document.getElementById('action-subscribe'),
-              /* display */     document.getElementById('action-display'));
+              /* display */     document.getElementById('action-display'),
+              /* send */        document.getElementById('action-send'));
 
           generator.registerServiceWorker(location.pathname);
           generator.requestPermission();
@@ -59,18 +65,50 @@
           <button id="action-subscribe">Subscribe</button> —
           <button id="action-display">Display subscription</button>
         </p>
-<!--
+      </div>
+    </section>
+    <section>
+      <div id="test-case" class="test-case">
         <h2>Message settings</h2>
+        <ol>
+          <li>
+            <label for="protocol">Protocol</label>
+            <select id="protocol">
+              <option data-id="0" value="gcm">GCM protocol</option>
+              <option data-id="1" value="web_push">Web Push protocol</option>
+            </select>
+          </li>
+          <li>
+            <label for="payload">Payload</label>
+            <select id="payload">
+              <option data-id="0" value="none">No payload</option>
+              <option data-id="1" value="text">Textual payload</option>
+              <option data-id="2" value="json">JSON payload</option>
+              <option data-id="3" value="binary">Binary payload</option>
+              <option data-custom value="custom">Custom text</option>
+            </select>
+            <input id="payload_custom" type="text" />
+          </li>
+          <li>
+            <label for="encryption">Encryption</label>
+            <select id="encryption">
+              <option data-id="0" value="valid">Valid</option>
+              <option data-id="1" value="invalid_salt">Invalid salt</option>
+              <option data-id="2" value="invalid_public_key">Invalid public key</option>
+              <option data-id="3" value="invalid_payload">Invalid payload (garbage)</option>
+              <option data-id="4" value="invalid_records">Invalid payload (multiple records)</option>
+              <option data-id="5" value="invalid_record_size">Invalid payload (record size)</option>
+            </select>
+          </li>
+        </ol>
 
         <p>
-          <button id="action-reset">Reset</button>
-          <button id="action-display">Send the push message</button>
+          <button id="action-send">Send the push message</button>
         </p>
--->
       </div>
       <div id="subscription-info-dialog" class="dialog-content">
         <h2>Subscription information</h2>
-        <p><strong>Endpoint</strong>: <span id="endpoint">[unknown]</span></p>
-        <p><strong>p256dh</strong>: <span id="p256dh">[unknown]</span></p>
-        <p><strong>auth</strong>: <span id="auth">[unknown]</span></p>
+        <p><strong>Endpoint</strong>: <span id="endpoint">[undefined]</span></p>
+        <p><strong>p256dh</strong>: <span id="p256dh">[undefined]</span></p>
+        <p><strong>auth</strong>: <span id="auth">[undefined]</span></p>
       </div>

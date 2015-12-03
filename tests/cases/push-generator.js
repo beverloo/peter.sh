@@ -9,6 +9,7 @@ function PushGenerator(requirementsElement, element) {
   this.unsubscribeElement_ = null;
   this.subscribeElement_ = null;
   this.displayElement_ = null;
+  this.sendElement_ = null;
 
   this.addSubscriptionRequirement();
 }
@@ -16,6 +17,7 @@ function PushGenerator(requirementsElement, element) {
 PushGenerator.REQUIREMENT_SUBSCRIPTION = 0;
 
 PushGenerator.GCM_MANIFEST_FILE = '/push-generator/push-generator-gcm-manifest.json';
+PushGenerator.MESSAGE_TARGET = '/push-generator/send-message.php';
 
 PushGenerator.prototype = Object.create(NotificationGeneratorBase.prototype);
 
@@ -48,13 +50,17 @@ PushGenerator.prototype.subscribe = function() {
     userVisibleOnly: this.getField(state, 'userVisibleOnly', true)
   };
 
+  this.subscribeElement_.disabled = true;
   this.doSubscribe(settings).then(function() {
     self.updateActionState();
 
     document.location.hash =
         self.serialize(self.computeState(false /* includeDefault */));
 
-  }, function(error) { alert(error); });
+  }).catch(function(error) {
+    self.subscribeElement_.disabled = false;
+    alert(error);
+  });
 };
 
 PushGenerator.prototype.doSubscribe = function(settings) {
@@ -109,8 +115,8 @@ PushGenerator.prototype.displaySubscription = function() {
         data = JSON.parse(JSON.stringify(subscription));
 
     var endpoint = data.endpoint;
-    var p256dh = '[unknown]';
-    var auth = '[unknown]';
+    var p256dh = '[undefined]';
+    var auth = '[undefined]';
 
     if (data.hasOwnProperty('keys')) {
       if (data.keys.hasOwnProperty('p256dh'))
@@ -128,14 +134,54 @@ PushGenerator.prototype.displaySubscription = function() {
   });
 };
 
-PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display) {
+PushGenerator.prototype.sendMessage = function() {
+  if (!this.verifyRequirements())
+    return;
+
+  var state = this.computeState(true /* includeDefault */),
+      self = this;
+
+  this.sendElement_.disabled = true;
+  return navigator.serviceWorker.ready.then(function(registration) {
+    return registration.pushManager.getSubscription();
+
+  }).then(function(subscription) {
+    if (!subscription)
+      throw new Error('You must be subscribed for push messages.');
+
+    var data = new FormData();
+    data.append('subscription', JSON.stringify(subscription));
+    data.append('protocol', self.getField(state, 'protocol', 'gcm'));
+    data.append('payload', self.getField(state, 'payload', 'none'));
+    data.append('encryption', self.getField(state, 'encryption', 'valid'));
+
+    return fetch(PushGenerator.MESSAGE_TARGET, { method: 'POST', body: data });
+
+  }).then(function(response) {
+    if (!response.ok)
+      throw new Error('The server responsed with a status code of ' + response.status + '.');
+
+    // TODO: Display some sensible information about the message having been sent.
+    alert('omg sent? ' + response);
+
+  }).catch(function(error) {
+    alert('Unable to send a message: ' + error);
+
+  }).then(function() {
+    self.sendElement_.disabled = false;
+  });
+};
+
+PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display, send) {
   unsubscribe.addEventListener('click', this.__proto__.unsubscribe.bind(this));
   subscribe.addEventListener('click', this.__proto__.subscribe.bind(this));
   display.addEventListener('click', this.__proto__.displaySubscription.bind(this));
+  send.addEventListener('click', this.__proto__.sendMessage.bind(this));
 
   this.unsubscribeElement_ = unsubscribe;
   this.subscribeElement_ = subscribe;
   this.displayElement_ = display;
+  this.sendElement_ = send;
 
   this.updateActionState();
 };
@@ -161,6 +207,7 @@ PushGenerator.prototype.updateActionState = function() {
     self.unsubscribeElement_.disabled = false;
     self.subscribeElement_.disabled = true;
     self.displayElement_.disabled = false;
+    self.sendElement_.disabled = false;
 
     self.satisfyRequirement(PushGenerator.REQUIREMENT_SUBSCRIPTION);
 
@@ -169,6 +216,7 @@ PushGenerator.prototype.updateActionState = function() {
     self.unsubscribeElement_.disabled = true;
     self.subscribeElement_.disabled = false;
     self.displayElement_.disabled = true;
+    self.sendElement_.disabled = true;
 
     self.addSubscriptionRequirement();
   });
