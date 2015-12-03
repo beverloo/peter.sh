@@ -37,6 +37,9 @@ function RequirementsBase(requirementsElement) {
 }
 
 RequirementsBase.prototype.addRequirement = function(id, description) {
+  if (this.satisfied_.hasOwnProperty(id))
+    delete this.satisfied_[id];
+
   this.requirements_[id] = description;
   this.requirementsChanged();
 };
@@ -91,8 +94,10 @@ RequirementsBase.prototype.requirementsChanged = function() {
 // Base for features that can generate settings from one or more fields. The
 // serialization, deserialization and registration of fields will be managed by
 // the common code, whereas applying the fields will be done by the user.
-function GeneratorBase(requirementsElement) {
+function GeneratorBase(requirementsElement, element) {
   RequirementsBase.call(this, requirementsElement);
+
+  this.element_ = element;
 
   this.fields_ = {};
   this.serialized_state_ = {};
@@ -285,7 +290,7 @@ GeneratorBase.prototype.resolveFieldState = function(name) {
   return { index: index, value: value, type: field.type };
 };
 
-GeneratorBase.prototype.computeState = function(include_default) {
+GeneratorBase.prototype.computeState = function(includeDefault) {
   var self = this,
       state = {};
 
@@ -295,10 +300,10 @@ GeneratorBase.prototype.computeState = function(include_default) {
         fieldState = self.resolveFieldState(name);
 
     if (((fieldState.index !== undefined && fieldState.index == defaultValue) ||
-         (fieldState.value == defaultValue)) && !include_default)
+         (fieldState.value == defaultValue)) && !includeDefault)
       return;
 
-    // TODO: Check for the default value if |include_default|.
+    // TODO: Check for the default value if |includeDefault|.
     state[name] = fieldState;
   });
 
@@ -307,8 +312,8 @@ GeneratorBase.prototype.computeState = function(include_default) {
 
 // Base class for notification generators, e.g. the Push API and the Notification
 // API. Will automatically register the common requirements.
-function NotificationGeneratorBase(requirementsElement, serviceWorker) {
-  GeneratorBase.call(this, requirementsElement);
+function NotificationGeneratorBase(requirementsElement, element, serviceWorker) {
+  GeneratorBase.call(this, requirementsElement, element);
 
   this.serviceWorker_ = serviceWorker;
 

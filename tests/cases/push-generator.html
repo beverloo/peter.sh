@@ -5,9 +5,22 @@
       <script src="/cases/push-generator.js"></script>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
-          var requirementsElement = document.getElementById('requirements');
+          var requirementsElement = document.getElementById('requirements'),
+              element = document.getElementById('test-case');
 
-          var generator = new PushGenerator(requirementsElement);
+          var generator = new PushGenerator(requirementsElement, element);
+          generator.deserialize(document.location.hash);
+          generator.setFields({
+            // Subscription settings
+            authentication: ['authentication', GeneratorBase.FIELD_TYPE_STRING],
+            source: ['source', GeneratorBase.FIELD_TYPE_STRING],
+            userVisibleOnly: ['userVisibleOnly', GeneratorBase.FIELD_TYPE_BOOL]
+          });
+
+          generator.setActionElements(
+              /* unsubscribe */ document.getElementById('action-unsubscribe'),
+              /* subscribe */   document.getElementById('action-subscribe'),
+              /* display */     document.getElementById('action-display'));
 
           generator.registerServiceWorker(location.pathname);
           generator.requestPermission();

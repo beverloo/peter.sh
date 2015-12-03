@@ -3,9 +3,8 @@
 // be found in the LICENSE file.
 
 function NotificationGenerator(requirementsElement, element) {
-  NotificationGeneratorBase.call(this, requirementsElement, 'notification-generator-sw.js');
-
-  this.element_ = element;
+  NotificationGeneratorBase.call(
+      this, requirementsElement, element, 'notification-generator-sw.js');
 }
 
 NotificationGenerator.prototype = Object.create(NotificationGeneratorBase.prototype);
@@ -48,7 +47,7 @@ NotificationGenerator.prototype.display = function() {
   if (!this.verifyRequirements())
     return;
 
-  var state = this.computeState(true /* include_default */);
+  var state = this.computeState(true /* includeDefault */);
   if (!state.hasOwnProperty('title')) {
     alert('The notification must at least have a title.');
     return;
@@ -64,7 +63,7 @@ NotificationGenerator.prototype.display = function() {
   var self = this;
   return promise.then(function() {
     document.location.hash =
-        self.serialize(self.computeState(false /* include_default */));
+        self.serialize(self.computeState(false /* includeDefault */));
   });
 };
 

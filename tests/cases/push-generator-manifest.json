@@ -1,0 +1,13 @@
+{
+  "name": "Push Generator",
+  "icons": [
+    {
+      "src": "/resources/icons/1.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "density": 1.0
+    }
+  ],
+  "start_url": "/push-generator/",
+  "display": "standalone"
+}
