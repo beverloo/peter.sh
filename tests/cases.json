@@ -3,5 +3,10 @@
     "title": "Notification Generator",
     "description": "A tool for dynamically creating Web Notifications.",
     "manifest": "/notification-generator/notification-generator-manifest.json"
+  },
+  "push-generator.html": {
+    "title": "Push Message Generator",
+    "description": "A tool for dynamically creating Push Messages.",
+    "manifest": "/push-generator/push-generator-manifest.json"
   }
 }

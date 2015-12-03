@@ -29,3 +29,9 @@
   margin-left: 0px;
   flex: none;
 }
+
+.requirements {
+  margin: 0 0 8px 0;
+  padding-top: 8px; padding-bottom: 8px;
+  background-color: rgba(255, 0, 0, .1);
+}

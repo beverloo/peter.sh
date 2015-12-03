@@ -1,0 +1,25 @@
+      <style>
+        
+      </style>
+      <script src="/cases/common.js"></script>
+      <script src="/cases/push-generator.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var requirementsElement = document.getElementById('requirements');
+
+          var generator = new PushGenerator(requirementsElement);
+
+          generator.registerServiceWorker(location.pathname);
+          generator.requestPermission();
+        });
+      </script>
+      <div id="test-case" class="test-case">
+        <ul id="requirements" class="requirements">
+          <li>Unable to execute the JavaScript code.</li>
+        </ul>
+
+        <p>
+          <button id="action-reset">Reset</button>
+          <button id="action-display">Send the push message</button>
+        </p>
+      </div>
