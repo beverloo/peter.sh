@@ -5,7 +5,6 @@
 function PushGenerator(requirementsElement) {
   RequirementsBase.call(this, requirementsElement);
 
-
   this.addRequirement(PushGenerator.REQUIREMENT_PERMISSION,
                       'Requires permission to display notifications.');
   this.addRequirement(PushGenerator.REQUIREMENT_SERVICE_WORKER,
