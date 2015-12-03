@@ -1,0 +1,31 @@
+.test-case { padding: 16px 0 1px 0; }
+.test-case h2 { padding-top: 0px; }
+.test-case p { padding: 0 16px; }
+
+/** Option lists **/
+.test-case ol {
+  margin: 0 0 8px 0;
+  padding: 0 16px;
+}
+
+.test-case ol > li {
+  border-bottom: none;
+  padding: 0 0 8px 0;
+  height: 1.3em;
+  display: flex;
+}
+
+/** Option field **/
+.test-case li > label {
+  width: 130px;
+}
+
+.test-case li > input,
+.test-case li > select {
+  flex: 1;
+}
+
+.test-case li > input[type="checkbox"] {
+  margin-left: 0px;
+  flex: none;
+}

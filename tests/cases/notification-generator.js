@@ -2,16 +2,6 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
-if (!Array.prototype.hasOwnProperty('includes')) {
-  Array.prototype.includes = function(value) {
-    for (var key in this) {
-      if (this[key] == value)
-        return true;
-    }
-    return false;
-  };
-}
-
 // Returns the value of |element|.
 function getElementValue(element) {
   switch (element.tagName) {
@@ -27,20 +17,20 @@ function getElementValue(element) {
   return undefined;
 }
 
-function NotificationGenerator(element) {
+function NotificationGenerator(requirementsElement, element) {
+  RequirementsBase.call(this, requirementsElement);
+
   this.element_ = element;
   this.fields_ = {};
-  this.requirements_ = [
-    NotificationGenerator.REQUIREMENT_PERMISSION,
-    NotificationGenerator.REQUIREMENT_SERVICE_WORKER
-  ];
-  this.satisfied_requirements_ = [];
   this.serialized_state_ = {};
 
-  // Public event: OnRequirementsChanged. Called with the list of requirements
-  // that have been satisfied. May be invoked multiple times.
-  this.onrequirementssatisfied = function(requirements) {};
+  this.addRequirement(NotificationGenerator.REQUIREMENT_PERMISSION,
+                      'Requires permission to display notifications.');
+  this.addRequirement(NotificationGenerator.REQUIREMENT_SERVICE_WORKER,
+                      'Requires the Service Worker to be registered.');
 }
+
+NotificationGenerator.prototype = Object.create(RequirementsBase.prototype);
 
 NotificationGenerator.REQUIREMENT_PERMISSION = 0;
 NotificationGenerator.REQUIREMENT_SERVICE_WORKER = 1;
@@ -60,7 +50,7 @@ NotificationGenerator.prototype.requestPermission = function() {
   var self = this;
   Notification.requestPermission(function(status) {
     if (status == 'granted')
-      self.requirementSatisfied(NotificationGenerator.REQUIREMENT_PERMISSION);
+      self.satisfyRequirement(NotificationGenerator.REQUIREMENT_PERMISSION);
   });
 };
 
@@ -72,15 +62,9 @@ NotificationGenerator.prototype.registerServiceWorker = function(scope) {
 
   var self = this;
   return navigator.serviceWorker.ready.then(function(serviceWorker) {
-    self.requirementSatisfied(NotificationGenerator.REQUIREMENT_SERVICE_WORKER);
+    self.satisfyRequirement(NotificationGenerator.REQUIREMENT_SERVICE_WORKER);
     return serviceWorker;
   });
-};
-
-// Called when a |requirement| has been satisfied.
-NotificationGenerator.prototype.requirementSatisfied = function(requirement) {
-  this.satisfied_requirements_.push(requirement);
-  this.onrequirementssatisfied(this.satisfied_requirements_);
 };
 
 // Creates the NotificationOptions dictionary based on the options in the
@@ -163,32 +147,11 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
   };
 };
 
-// Displays an alert() dialog for each of the requirements that have not been
-// satisfied yet. This informs the user that the test cannot yet be executed.
-NotificationGenerator.prototype.displayRequirementsAlerts = function() {
-  var self = this;
-  this.requirements_.forEach(function(requirement) {
-    if (self.satisfied_requirements_.includes(requirement))
-      return;
-
-    switch (requirement) {
-    case NotificationGenerator.REQUIREMENT_PERMISSION:
-      alert('Please grant notification permission.');
-      break;
-    case NotificationGenerator.REQUIREMENT_SERVICE_WORKER:
-      alert('Unable to install the Service Worker.');
-      break;
-    }
-  });
-};
-
 // Displays the notification using the settings that have thus far been set.
 // If not all requirements have been satisfied, the user will be alerted.
 NotificationGenerator.prototype.display = function() {
-  if (this.requirements_.length != this.satisfied_requirements_.length) {
-    this.displayRequirementsAlerts();
+  if (!this.verifyRequirements())
     return;
-  }
 
   var state = this.computeState(true /* include_default */);
   if (!state.hasOwnProperty('title')) {

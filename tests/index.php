@@ -36,6 +36,7 @@ if (strlen($_SERVER['REQUEST_URI']) > 1) {
     <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
     <link rel="stylesheet" href="//static.peter.sh/style/mobile.css" media="screen and (max-device-width: 767px)" />
     <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
+    <link rel="stylesheet" href="/style.css" />
 <?php
 if ($manifest)
   echo '    <link rel="manifest" href="' . $manifest . '" />' . PHP_EOL;
@@ -104,7 +105,7 @@ if (!$file) {
     <footer>
       Curated by <a href="http://peter.sh/">Peter Beverloo</a>. This page lives in the <a href="http://creativecommons.org/publicdomain/zero/1.0/">public domain</a>.
       <aside>
-        <a href="https://github.com/beverloo/peter.sh/tree/master/services"><?php echo substr($version, 0, 7); ?></a>
+        <a href="https://github.com/beverloo/peter.sh/tree/master/tests"><?php echo substr($version, 0, 7); ?></a>
       </aside>
     </footer>
     <script>

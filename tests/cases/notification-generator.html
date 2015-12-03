@@ -1,36 +1,4 @@
       <style>
-        .test-case { padding: 16px 0 1px 0; }
-        .test-case h2 { padding-top: 0px; }
-        .test-case p { padding: 0 16px; }
-
-        /** Option lists **/
-        .test-case ol {
-          margin: 0 0 8px 0;
-          padding: 0 16px;
-        }
-
-        .test-case ol > li {
-          border-bottom: none;
-          padding: 0 0 8px 0;
-          height: 1.3em;
-          display: flex;
-        }
-
-        /** Option field **/
-        .test-case li > label {
-          width: 130px;
-        }
-
-        .test-case li > input,
-        .test-case li > select {
-          flex: 1;
-        }
-
-        .test-case li > input[type="checkbox"] {
-          margin-left: 0px;
-          flex: none;
-        }
-
         /** Not-implemented warning **/
         [not-implemented]::after {
           content: ' ❗';
@@ -43,14 +11,16 @@
           background-color: rgba(255, 0, 0, .1);
         }
       </style>
+      <script src="/cases/common.js"></script>
       <script src="/cases/notification-generator.js"></script>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
-          var element = document.getElementById('test-case'),
-              generator = new NotificationGenerator(element);
+          var requirementsElement = document.getElementById('requirements'),
+              element = document.getElementById('test-case');
+
+          var generator = new NotificationGenerator(requirementsElement, element);
 
           generator.deserialize(document.location.hash);
-
           generator.setFields({
             // Visual settings
             title: ['title', NotificationGenerator.FIELD_TYPE_STRING],
@@ -93,19 +63,6 @@
             document.location.href = document.location.pathname;
           });
 
-          // Called when one or more of the requirements for the notification
-          // generator have been satisfied. The item will be removed from the list.
-          generator.onrequirementssatisfied = function(requirements) {
-            var list = document.getElementById('requirements');
-            if (list.children.length == requirements.length)
-              list.style.display = 'none';
-
-            requirements.forEach(function(requirementId) {
-              if (requirementId < list.children.length)
-                list.children[requirementId].style.display = 'none';
-            });
-          };
-
           // Listen for messages received from the Service Worker.
           navigator.serviceWorker.addEventListener('message', function(message) {
             alert(message.data);
@@ -117,8 +74,7 @@
       </script>
       <div id="test-case" class="test-case">
         <ul id="requirements" class="requirements">
-          <li>Requires `notification` permission.</li>
-          <li>Unable to register the Service Worker.</li>
+          <li>Unable to execute the JavaScript code.</li>
         </ul>
 
         <h2>Visual settings</h2>
