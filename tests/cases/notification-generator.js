@@ -3,43 +3,12 @@
 // be found in the LICENSE file.
 
 function NotificationGenerator(requirementsElement, element) {
-  GeneratorBase.call(this, requirementsElement);
+  NotificationGeneratorBase.call(this, requirementsElement, 'notification-generator-sw.js');
 
   this.element_ = element;
-
-  this.addRequirement(NotificationGenerator.REQUIREMENT_PERMISSION,
-                      'Requires permission to display notifications.');
-  this.addRequirement(NotificationGenerator.REQUIREMENT_SERVICE_WORKER,
-                      'Requires the Service Worker to be registered.');
 }
 
-NotificationGenerator.prototype = Object.create(GeneratorBase.prototype);
-
-NotificationGenerator.REQUIREMENT_PERMISSION = 0;
-NotificationGenerator.REQUIREMENT_SERVICE_WORKER = 1;
-
-// Requests permission for notifications, and will mark the permission
-// requirement as satisfied once this has been granted by the user.
-NotificationGenerator.prototype.requestPermission = function() {
-  var self = this;
-  Notification.requestPermission(function(status) {
-    if (status == 'granted')
-      self.satisfyRequirement(NotificationGenerator.REQUIREMENT_PERMISSION);
-  });
-};
-
-// Registers the generator's Service Worker for |scope|. The returned Promise
-// will be resolved when the worker is in ACTIVE state.
-NotificationGenerator.prototype.registerServiceWorker = function(scope) {
-  navigator.serviceWorker.register(scope + 'notification-generator-sw.js',
-                                   { scope: scope });
-
-  var self = this;
-  return navigator.serviceWorker.ready.then(function(serviceWorker) {
-    self.satisfyRequirement(NotificationGenerator.REQUIREMENT_SERVICE_WORKER);
-    return serviceWorker;
-  });
-};
+NotificationGenerator.prototype = Object.create(NotificationGeneratorBase.prototype);
 
 // Creates the NotificationOptions dictionary based on the options in the
 // generator. Default values will be added where necessary.
