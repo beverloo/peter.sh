@@ -101,7 +101,31 @@ PushGenerator.prototype.doSubscribeFromServiceWorker = function(settings) {
 };
 
 PushGenerator.prototype.displaySubscription = function() {
-  // TODO: Implement displaying subscription information.
+  return navigator.serviceWorker.ready.then(function(registration) {
+    return registration.pushManager.getSubscription();
+
+  }).then(function(subscription) {
+    var content = document.getElementById('subscription-info-dialog').cloneNode(true /* deep */),
+        data = JSON.parse(JSON.stringify(subscription));
+
+    var endpoint = data.endpoint;
+    var p256dh = '[unknown]';
+    var auth = '[unknown]';
+
+    if (data.hasOwnProperty('keys')) {
+      if (data.keys.hasOwnProperty('p256dh'))
+        p256dh = data.keys.p256dh;
+
+      if (data.keys.hasOwnProperty('auth'))
+        auth = data.keys.auth;
+    }
+
+    content.querySelector('#endpoint').textContent = endpoint;
+    content.querySelector('#p256dh').textContent = p256dh;
+    content.querySelector('#auth').textContent = auth;
+
+    return DisplayDialog(content);
+  });
 };
 
 PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display) {

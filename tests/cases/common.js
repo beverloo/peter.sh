@@ -27,6 +27,32 @@ function getElementValue(element) {
   return undefined;
 }
 
+// Displays a dialog with a copy of |contentElement|. Returns a promise that
+// will be resolved when the dialog has been closed.
+function DisplayDialog(contentElement) {
+  return new Promise(function(resolve) {
+    var overlayElement = document.createElement('div');
+    overlayElement.className = 'dialog-overlay';
+
+    contentElement.classList.remove('dialog-content');
+
+    var dialogElement = document.createElement('div');
+    dialogElement.className = 'dialog';
+
+    dialogElement.appendChild(contentElement);
+
+    document.body.appendChild(overlayElement);
+    document.body.appendChild(dialogElement);
+
+    overlayElement.addEventListener('click', function() {
+      document.body.removeChild(dialogElement);
+      document.body.removeChild(overlayElement);
+
+      resolve();
+    });
+  });
+}
+
 // Base for features that have one or more requirements that have to be
 // satisfied before the feature itself can be used.
 function RequirementsBase(requirementsElement) {

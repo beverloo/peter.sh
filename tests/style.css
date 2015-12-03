@@ -1,6 +1,6 @@
-.test-case { padding: 16px 0 1px 0; }
-.test-case h2 { padding-top: 0px; }
-.test-case p { padding: 0 16px; }
+.test-case, .dialog { padding: 16px 0 1px 0; }
+.test-case h2, .dialog h2 { padding-top: 0px; }
+.test-case p, .dialog p { padding: 0 16px; }
 
 /** Option lists **/
 .test-case ol {
@@ -34,4 +34,35 @@
   margin: 0 0 8px 0;
   padding-top: 8px; padding-bottom: 8px;
   background-color: rgba(255, 0, 0, .1);
+}
+
+.dialog-content { display: none; }
+
+.dialog-overlay {
+  position: fixed;
+  z-index: 1;
+
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  background-color: rgba(0, 0, 0, .4);
+  cursor: pointer;
+}
+
+.dialog p { word-break: break-all; }
+
+.dialog {
+  position: absolute;
+  z-index: 2;
+
+  width: 80%;
+
+  top: 80px;
+  margin-left: 10%;
+  box-sizing: border-box;
+
+  background-color: white;
+  box-shadow: 0px 1px 4px #444;
 }
