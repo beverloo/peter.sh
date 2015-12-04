@@ -77,19 +77,3 @@ self.addEventListener('notificationclick', function(event) {
 
   event.waitUntil(promise);
 });
-
-// Stale-while-revalidate strategy from Jake:
-// https://jakearchibald.com/2014/offline-cookbook/#stale-while-revalidate
-self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.open('petersh-tests-notifications').then(function(cache) {
-      return cache.match(event.request).then(function(response) {
-        var fetchPromise = fetch(event.request).then(function(networkResponse) {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        })
-        return response || fetchPromise;
-      })
-    })
-  );
-});

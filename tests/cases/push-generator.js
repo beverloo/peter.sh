@@ -135,13 +135,33 @@ PushGenerator.prototype.displaySubscription = function() {
 };
 
 PushGenerator.prototype.sendMessage = function() {
+  var self = this;
+
+  this.sendElement_.disabled = true;
+  this.createMessage().then(function(message) {
+    if (!message)
+      return;  // an error message may already have been displayed.
+
+    console.log(message);
+
+  }).catch(function(error) {
+    alert('Unable to send a message: ' + error);
+
+  }).then(function() {
+    self.sendElement_.disabled = false;
+    document.location.hash =
+        self.serialize(self.computeState(false /* includeDefault */));
+
+  });
+};
+
+PushGenerator.prototype.createMessage = function() {
   if (!this.verifyRequirements())
-    return;
+    return Promise.resolve(null);
 
   var state = this.computeState(true /* includeDefault */),
       self = this;
 
-  this.sendElement_.disabled = true;
   return navigator.serviceWorker.ready.then(function(registration) {
     return registration.pushManager.getSubscription();
 
@@ -149,27 +169,74 @@ PushGenerator.prototype.sendMessage = function() {
     if (!subscription)
       throw new Error('You must be subscribed for push messages.');
 
-    var data = new FormData();
-    data.append('subscription', JSON.stringify(subscription));
-    data.append('protocol', self.getField(state, 'protocol', 'gcm'));
-    data.append('payload', self.getField(state, 'payload', 'none'));
-    data.append('encryption', self.getField(state, 'encryption', 'valid'));
+    var settings = {
+      protocol: self.getField(state, 'protocol', 'gcm'),
+      payload: self.getField(state, 'payload', 'none'),
+      encryption: self.getField(state, 'encryption', 'valid')
+    };
 
-    return fetch(PushGenerator.MESSAGE_TARGET, { method: 'POST', body: data });
+    if (settings.payload != 'none') {
+      var data = JSON.parse(JSON.stringify(subscription));
+      if (!data.hasOwnProperty('keys') || !data.keys.hasOwnProperty('p256dh') ||
+          !data.keys.hasOwnProperty('auth')) {
+        throw new Error('This implementation requires existence of the P-256 and auth keys ' +
+                        'for adding payloads to a push message.');
+      }
+    }
 
-  }).then(function(response) {
-    if (!response.ok)
-      throw new Error('The server responsed with a status code of ' + response.status + '.');
+    return self.doCreateMessage(subscription, settings);
 
-    // TODO: Display some sensible information about the message having been sent.
-    alert('omg sent? ' + response);
+  }).then(function(message) {
+    console.info(message);
 
-  }).catch(function(error) {
-    alert('Unable to send a message: ' + error);
-
-  }).then(function() {
-    self.sendElement_.disabled = false;
   });
+};
+
+PushGenerator.prototype.doCreateMessage = function(subscription, settings) {
+  var self = this;
+
+  return this.doCreatePayload(subscription, settings).then(function(payload) {
+    return {
+      endpoint: self.doCreateEndpoint(subscription, settings),
+      headers: self.doCreateHeaders(payload, subscription, settings),
+      body: self.doCreateBody(payload, subscription, settings)
+    };
+  });
+};
+
+PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
+  if (settings.payload === 'none') {
+    return Promise.resolve({ encryptionHeader: null,
+                             cryptoKeyHeader: null,
+                             payload: null });
+  }
+
+  var encryptor = new WebPushEncryption();
+  encryptor.setRecipientPublicKey(subscription.getKey('p256dh'));
+  encryptor.setAuthenticationSecret(subscription.getKey('auth'));
+  encryptor.setData('Hello!');  // TODO: Set the real input data.
+
+  return encryptor.encrypt();
+
+};
+
+PushGenerator.prototype.doCreateEndpoint = function(subscription, settings) {
+  // TODO: Transform for GCM when protocol != web_push
+  return subscription.endpoint;
+};
+
+PushGenerator.prototype.doCreateHeaders = function(payload, subscription, settings) {
+  if (settings.protocol == 'gcm') {
+    // TODO: Create headers for GCM messages.
+    return 'gcm';
+  }
+
+  // TODO: Create headers for Web Push messages.
+  return 'webpush';
+};
+
+PushGenerator.prototype.doCreateBody = function(payload, subscription, settings) {
+  return 'body';
 };
 
 PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display, send) {
