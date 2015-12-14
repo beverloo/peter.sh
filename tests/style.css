@@ -11,8 +11,8 @@
 .test-case ol > li {
   border-bottom: none;
   padding: 0 0 8px 0;
-  height: 1.3em;
   display: flex;
+  align-items: center;
 }
 
 /** Option field **/
