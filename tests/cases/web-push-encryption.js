@@ -5,6 +5,9 @@
 // Converts the contents of |arrayBuffer| in range of [start, end] to an URL-
 // safe base64 encoded representation.
 function toBase64Url(arrayBuffer, start, end) {
+  start = start || 0;
+  end = end || arrayBuffer.byteLength;
+
   var buffer = new Uint8Array(arrayBuffer.slice(start, end)),
       base64 = btoa(String.fromCharCode.apply(null, buffer));
 

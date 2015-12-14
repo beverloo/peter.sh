@@ -124,6 +124,14 @@ PushGenerator.prototype.displaySubscription = function() {
 
       if (data.keys.hasOwnProperty('auth'))
         auth = data.keys.auth;
+
+    // Firefox doesn't seem to expose the encryption keys in the serialization yet.
+    } else if (subscription.__proto__.hasOwnProperty('getKey')) {
+      try {
+        p256dh = toBase64Url(subscription.getKey('p256dh'));
+        auth = toBase64Url(subscription.getKey('auth'));
+
+      } catch (e) {}
     }
 
     content.querySelector('#endpoint').textContent = endpoint;
