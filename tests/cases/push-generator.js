@@ -142,24 +142,26 @@ PushGenerator.prototype.sendMessage = function() {
     if (!message)
       return;  // an error message may already have been displayed.
 
-    var data = new FormData();
-    data.append('endpoint', message.endpoint);
-    data.append('headers', message.headers);
-    data.append('body', btoa(message.body));
+    var endpoint = message.endpoint;
+    if (endpoint.startsWith('https://android.googleapis.com/gcm/send/'))
+      endpoint = 'https://jmt17.google.com/gcm/demo-webpush-00/' + endpoint.substr(40);
 
-    return new Promise(function(resolve) {
-      var request = new XMLHttpRequest();
-      request.open('POST', '/push.php', true);
+    var headers = message.headers;
+    headers['X-Endpoint'] = endpoint;
 
-      request.onload = function() {
-        resolve(request);
-      };
 
-      request.send(data);
+    return fetch('/push.php', {
+      method: 'post',
+      headers: headers,
+      body: message.body
     });
 
-  }).then(function(request) {
-    console.log(request);
+  }).then(function(response) {
+    response.text().then(function(text) {
+      console.log(text);
+    });
+
+    console.log(response);
 
   }).catch(function(error) {
     alert('Unable to send a message: ' + error);
@@ -180,10 +182,15 @@ PushGenerator.prototype.displayMessage = function() {
     if (!message)
       return;  // an error message may already have been displayed.
 
-    var content = document.getElementById('message-info-dialog').cloneNode(true /* deep */);
+    var content = document.getElementById('message-info-dialog').cloneNode(true /* deep */),
+        headers = [];
+
+    Object.keys(message.headers).forEach(function(headerName) {
+      headers.push(headerName + ': '  + message.headers[headerName]);
+    });
 
     content.querySelector('#endpoint').textContent = message.endpoint;
-    content.querySelector('#headers').innerHTML = message.headers.join('<br />');
+    content.querySelector('#headers').innerHTML = headers.join('<br />');
     content.querySelector('#body').textContent = btoa(message.body);
 
     DisplayDialog(content);
@@ -229,7 +236,6 @@ PushGenerator.prototype.createMessage = function() {
     }
 
     return self.doCreateMessage(subscription, settings);
-
   });
 };
 
@@ -284,17 +290,12 @@ PushGenerator.prototype.doCreateEndpoint = function(subscription, settings) {
 
 PushGenerator.prototype.doCreateHeaders = function(payload, subscription, settings) {
   if (settings.payload == 'none')
-    return [];  // no payload headers are necessary
+    return {};  // no payload headers are necessary
 
-  if (settings.protocol == 'gcm') {
-    // TODO: Create headers for GCM messages.
-    return [];
-  }
-
-  return [
-    'Encryption: salt="' + payload.salt + '"',
-    'Crypto-Key: dh="' + payload.dh + '"'
-  ];
+  return {
+    'Encryption': 'salt="' + payload.salt + '"',
+    'Crypto-Key': 'dh="' + payload.dh + '"'
+  };
 };
 
 PushGenerator.prototype.doCreateBody = function(payload, subscription, settings) {
@@ -303,7 +304,9 @@ PushGenerator.prototype.doCreateBody = function(payload, subscription, settings)
     return '';
   }
 
-  return String.fromCharCode.apply(null, new Uint8Array(payload.ciphertext));
+  return payload.ciphertext;
+
+//  return String.fromCharCode.apply(null, new Uint8Array(payload.ciphertext));
 };
 
 PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display, send, displayMsg) {
