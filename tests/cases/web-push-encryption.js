@@ -37,6 +37,53 @@ function toArrayBuffer(data) {
 
 // -----------------------------------------------------------------------------
 
+// Exports |cryptoKey| as an uncompressed NIST P-256 point (65 bytes).
+function exportUncompressedP256Point(cryptoKey) {
+  return crypto.subtle.exportKey('jwk', cryptoKey).then(function(jwk) {
+    // Create the public key in uncompressed point form. Surely there must be
+    // a better way of doing this?
+    var publicKey = new Uint8Array(65);
+    publicKey.set([0x04]);
+    publicKey.set(new Uint8Array(fromBase64Url(jwk.x)), 1);
+    publicKey.set(new Uint8Array(fromBase64Url(jwk.y)), 33);
+
+    return publicKey;
+  });
+}
+
+function HMAC(ikm) {
+  this.signPromise_ = crypto.subtle.importKey(
+      'raw', ikm, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+}
+
+HMAC.prototype.sign = function(input) {
+  return this.signPromise_.then(function(key) {
+    return crypto.subtle.sign('HMAC', key, input);
+  });
+};
+
+function HKDF(ikm, salt) {
+  var hmac = new HMAC(salt);
+
+  this.extractPromise_ = hmac.sign(ikm).then(function(prk) {
+    return new HMAC(prk);
+  });
+}
+
+HKDF.prototype.extract = function(rawInfo, byteLength) {
+  var info = new Uint8Array(rawInfo.byteLength + 1);
+  info.set(new Uint8Array(rawInfo));
+  info.set(new Uint8Array([1]), rawInfo.byteLength);
+
+  return this.extractPromise_.then(function(prkHmac) {
+    return prkHmac.sign(info);
+  }).then(function(hkdf) {
+    return hkdf.slice(0, byteLength);
+  });
+};
+
+// -----------------------------------------------------------------------------
+
 // Implementation of Web Push Encryption based on WebCrypto that provides
 // routines both for encrypting and decrypting content.
 function WebPushEncryption() {
@@ -182,31 +229,18 @@ WebPushEncryption.prototype.deriveSharedSecret = function() {
 WebPushEncryption.prototype.deriveEncryptionKeys = function(sharedSecret) {
   var self = this;
 
-  return crypto.subtle.importKey(
-      'raw', sharedSecret, { name: 'HKDF' }, false,
-      ['deriveKey', 'deriveBits']).then(function(sharedKey) {
-    // (4) Derive the pseudo-random key (PRK) from the |sharedSecret| (IKM) and
-    // the authentication secret, when set. Note that Web Push clients will
-    // require the authentication secret to be set.
-    if (!self.authenticationSecret_ || !self.authenticationSecret_.byteLength)
-      return sharedKey;
+  // (1) Determine the uncompressed point representation of the NIST P-256
+  // public value stored in the |senderKeys_| member.
+  return Promise.resolve().then(function() {
+    if (self.senderKeys_.publicKey instanceof ArrayBuffer)
+      return self.senderKeys_.publicKey;
 
-    var algorithm = {
-      name: 'HKDF',
-      hash: { name: 'SHA-256' },
-      salt: self.authenticationSecret_,
-      info: toArrayBuffer("Content-Encoding: auth")
-    };
+    return exportUncompressedP256Point(self.senderKeys_.publicKey);
 
-    return crypto.subtle.deriveBits(
-        algorithm, sharedKey, 256).then(function(bits) {
-      return crypto.subtle.importKey(
-          'raw', sharedSecret, { name: 'HKDF' }, false,
-          ['deriveKey', 'deriveBits']);
-    });
+  }).then(function(senderPublic) {
+    var UTF8 = new TextEncoder('utf-8');
 
-  }).then(function(prk) {
-    // (5) Derive the context for the info parameters used to determine the
+    // (2) Derive the context for the info parameters used to determine the
     // content encryption key and the nonce (IV). It contains the public keys
     // of both the recipient and the sender.
     //
@@ -220,10 +254,10 @@ WebPushEncryption.prototype.deriveEncryptionKeys = function(sharedSecret) {
     context.set([0x00, self.recipientPublicKey_.byteLength], 6);
     context.set(new Uint8Array(self.recipientPublicKey_), 8);
 
-    context.set([0x00, self.senderKeys_.publicKey.byteLength], 73);
-    context.set(new Uint8Array(self.senderKeys_.publicKey), 75);
+    context.set([0x00, senderPublic.byteLength], 73);
+    context.set(new Uint8Array(senderPublic), 75);
 
-    // (6) Derive the cek_info and the nonce_info.
+    // (3) Derive the cek_info and the nonce_info.
     //
     // cek_info = "Content-Encoding: aesgcm128" || 0x00 || context
     // nonce_info = "Content-Encoding: nonce" || 0x00 || context
@@ -231,49 +265,42 @@ WebPushEncryption.prototype.deriveEncryptionKeys = function(sharedSecret) {
     var cekInfo = new Uint8Array(27 + 1 + context.byteLength);
     var nonceInfo = new Uint8Array(23 + 1 + context.byteLength);
 
-    cekInfo.set(new Uint8Array(toArrayBuffer('Content-Encoding: aesgcm128')));
+    cekInfo.set(UTF8.encode('Content-Encoding: aesgcm128'));
     cekInfo.set(context, 28);
 
-    nonceInfo.set(new Uint8Array(toArrayBuffer('Content-Encoding: nonce')));
+    nonceInfo.set(UTF8.encode('Content-Encoding: nonce'));
     nonceInfo.set(context, 24);
 
-    // (7) Derive the content encryption key and the nonce at the same time,
-    // and return an object having both to the next user of the promise chain.
-    var cekAlgorithm = {
-      name: 'HKDF',
-      hash: { name: 'SHA-256' },
-      salt: self.salt_,
-      info: cekInfo
-    };
+    // (4) Using the authentication data, derive the PRK and use it to further
+    // derive the content encryption key and the nonce, also using the info
+    // values derived in step (6) above.
 
-    var nonceAlgorithm = {
-      name: 'HKDF',
-      hash: { name: 'SHA-256' },
-      salt: self.salt_,
-      info: nonceInfo
-    };
+    var authInfo = UTF8.encode('Content-Encoding: auth\0');
 
-    return Promise.all([
-      crypto.subtle.deriveKey(
-          cekAlgorithm, prk, { name: 'AES-GCM', length: 128 }, false, ['encrypt', 'decrypt']),
-      crypto.subtle.deriveBits(nonceAlgorithm, prk, 96)
+    var hkdf = new HKDF(sharedSecret, self.authenticationSecret_);
+    return hkdf.extract(authInfo, 32).then(function(prk) {
+      hkdf = new HKDF(prk, self.salt_);
 
-    ]).then(function(results) {
-      return {
-        contentEncryptionKey: results[0],
-        nonce: results[1]
-      };
+      return Promise.all([
+        hkdf.extract(cekInfo, 16).then(function(bits) {
+          return crypto.subtle.importKey(
+              'raw', bits, 'AES-GCM', false, ['encrypt', 'decrypt']);
+        }),
+        hkdf.extract(nonceInfo, 12)
+      ]);
+    }).then(function(keys) {
+      return { contentEncryptionKey: keys[0],
+               nonce: keys[1] };
     });
   });
 };
 
-// Encrypts |plaintext|, which must be an ArrayBuffer holding the plaintext data
-// with the encryption information known to this class. Optionally, between 0
-// and 255 bytes of padding data can be provided in |paddingBytes| to hide the
-// length of the content.
+// Encrypts |plaintext|, which must either be an ArrayBuffer or a string that
+// can be encoded as UTF-8 content. Optionally, between 0 and 255 bytes of
+// padding data can be provided in |paddingBytes| to hide the content's length.
 WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
   if (!(plaintext instanceof ArrayBuffer))
-    throw new Error('The input plaintext must be given in an ArrayBuffer.');
+    plaintext = new TextEncoder('utf-8').encode(plaintext);
 
   paddingBytes = paddingBytes || 0;
   if (typeof paddingBytes != 'number' || paddingBytes < 0 || paddingBytes > 255)
@@ -308,16 +335,8 @@ WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
     if (self.senderKeys_.publicKey instanceof ArrayBuffer)
       return self.senderKeys_.publicKey;
 
-    return crypto.subtle.exportKey('jwk', self.senderKeys_.publicKey).then(function(jwk) {
-      // Create the public key in uncompressed point form. Surely there must be
-      // a better way of doing this?
-      var publicKey = new Uint8Array(65);
-      publicKey.set([0x04]);
-      publicKey.set(new Uint8Array(fromBase64Url(jwk.x)), 1);
-      publicKey.set(new Uint8Array(fromBase64Url(jwk.y)), 33);
+    return exportUncompressedP256Point(self.senderKeys_.publicKey);
 
-      return publicKey;
-    });
   }).then(function(publicKey) {
     return {
       ciphertext: ciphertext,

@@ -149,7 +149,6 @@ PushGenerator.prototype.sendMessage = function() {
     var headers = message.headers;
     headers['X-Endpoint'] = endpoint;
 
-
     return fetch('/push.php', {
       method: 'post',
       headers: headers,
@@ -157,11 +156,10 @@ PushGenerator.prototype.sendMessage = function() {
     });
 
   }).then(function(response) {
-    response.text().then(function(text) {
-      console.log(text);
-    });
-
-    console.log(response);
+    if (!response.ok) {
+      console.warn(response);
+      throw new Error('The server was unable to POST the push message.');
+    }
 
   }).catch(function(error) {
     alert('Unable to send a message: ' + error);
@@ -258,11 +256,8 @@ PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
                              payload: null });
   }
 
-  var payload = new Uint8Array(12),
+  var payload = 'Hello, world!',
       paddingBytes = 0;
-
-  payload.set([0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72,
-               0x6C, 0x64, 0x21])  // Hello, world!
 
   switch (settings.payload) {
     case 'text':
@@ -270,6 +265,9 @@ PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
       break;
     case 'text_padding':
       paddingBytes = 128;
+      break;
+    default:
+      payload = settings.payload;
       break;
   }
 
@@ -279,7 +277,7 @@ PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
   encryptor.createSalt();
 
   return encryptor.createSenderKeys().then(function() {
-    return encryptor.encrypt(payload.buffer, paddingBytes);
+    return encryptor.encrypt(payload, paddingBytes);
   });
 };
 

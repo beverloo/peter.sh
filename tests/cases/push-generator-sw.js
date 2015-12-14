@@ -11,12 +11,14 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('push', function(event) {
+  var message = '[empty payload]';
+
   if (event.data)
-    console.log(event.data.text());
+    message = event.data.text();
 
   event.waitUntil(
-    registration.showNotification('Hello', {
-      body: 'world'
+    registration.showNotification('Push Generator', {
+      body: message
     })
   );
 });
