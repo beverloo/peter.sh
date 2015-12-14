@@ -142,13 +142,57 @@ PushGenerator.prototype.sendMessage = function() {
     if (!message)
       return;  // an error message may already have been displayed.
 
-    console.log(message);
+    var data = new FormData();
+    data.append('endpoint', message.endpoint);
+    data.append('headers', message.headers);
+    data.append('body', btoa(message.body));
+
+    return new Promise(function(resolve) {
+      var request = new XMLHttpRequest();
+      request.open('POST', '/push.php', true);
+
+      request.onload = function() {
+        resolve(request);
+      };
+
+      request.send(data);
+    });
+
+  }).then(function(request) {
+    console.log(request);
 
   }).catch(function(error) {
     alert('Unable to send a message: ' + error);
 
   }).then(function() {
     self.sendElement_.disabled = false;
+    document.location.hash =
+        self.serialize(self.computeState(false /* includeDefault */));
+
+  });
+};
+
+PushGenerator.prototype.displayMessage = function() {
+  var self = this;
+
+  this.displayMsgElement_.disabled = true;
+  this.createMessage().then(function(message) {
+    if (!message)
+      return;  // an error message may already have been displayed.
+
+    var content = document.getElementById('message-info-dialog').cloneNode(true /* deep */);
+
+    content.querySelector('#endpoint').textContent = message.endpoint;
+    content.querySelector('#headers').innerHTML = message.headers.join('<br />');
+    content.querySelector('#body').textContent = btoa(message.body);
+
+    DisplayDialog(content);
+
+  }).catch(function(error) {
+    alert('Unable to send a message: ' + error);
+
+  }).then(function() {
+    self.displayMsgElement_.disabled = false;
     document.location.hash =
         self.serialize(self.computeState(false /* includeDefault */));
 
@@ -186,9 +230,6 @@ PushGenerator.prototype.createMessage = function() {
 
     return self.doCreateMessage(subscription, settings);
 
-  }).then(function(message) {
-    console.info(message);
-
   });
 };
 
@@ -211,13 +252,29 @@ PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
                              payload: null });
   }
 
+  var payload = new Uint8Array(12),
+      paddingBytes = 0;
+
+  payload.set([0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72,
+               0x6C, 0x64, 0x21])  // Hello, world!
+
+  switch (settings.payload) {
+    case 'text':
+      // no padding has to be applied
+      break;
+    case 'text_padding':
+      paddingBytes = 128;
+      break;
+  }
+
   var encryptor = new WebPushEncryption();
   encryptor.setRecipientPublicKey(subscription.getKey('p256dh'));
   encryptor.setAuthenticationSecret(subscription.getKey('auth'));
-  encryptor.setData('Hello!');  // TODO: Set the real input data.
+  encryptor.createSalt();
 
-  return encryptor.encrypt();
-
+  return encryptor.createSenderKeys().then(function() {
+    return encryptor.encrypt(payload.buffer, paddingBytes);
+  });
 };
 
 PushGenerator.prototype.doCreateEndpoint = function(subscription, settings) {
@@ -226,29 +283,42 @@ PushGenerator.prototype.doCreateEndpoint = function(subscription, settings) {
 };
 
 PushGenerator.prototype.doCreateHeaders = function(payload, subscription, settings) {
+  if (settings.payload == 'none')
+    return [];  // no payload headers are necessary
+
   if (settings.protocol == 'gcm') {
     // TODO: Create headers for GCM messages.
-    return 'gcm';
+    return [];
   }
 
-  // TODO: Create headers for Web Push messages.
-  return 'webpush';
+  return [
+    'Encryption: salt="' + payload.salt + '"',
+    'Crypto-Key: dh="' + payload.dh + '"'
+  ];
 };
 
 PushGenerator.prototype.doCreateBody = function(payload, subscription, settings) {
-  return 'body';
+  if (settings.protocol == 'gcm') {
+    // TODO: Create the request body for the GCM protocol.
+    return '';
+  }
+
+  return String.fromCharCode.apply(null, new Uint8Array(payload.ciphertext));
 };
 
-PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display, send) {
+PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display, send, displayMsg) {
   unsubscribe.addEventListener('click', this.__proto__.unsubscribe.bind(this));
   subscribe.addEventListener('click', this.__proto__.subscribe.bind(this));
   display.addEventListener('click', this.__proto__.displaySubscription.bind(this));
   send.addEventListener('click', this.__proto__.sendMessage.bind(this));
+  displayMsg.addEventListener('click', this.__proto__.displayMessage.bind(this));
+
 
   this.unsubscribeElement_ = unsubscribe;
   this.subscribeElement_ = subscribe;
   this.displayElement_ = display;
   this.sendElement_ = send;
+  this.displayMsgElement_ = displayMsg;
 
   this.updateActionState();
 };
@@ -275,6 +345,7 @@ PushGenerator.prototype.updateActionState = function() {
     self.subscribeElement_.disabled = true;
     self.displayElement_.disabled = false;
     self.sendElement_.disabled = false;
+    self.displayMsgElement_.disabled = false;
 
     self.satisfyRequirement(PushGenerator.REQUIREMENT_SUBSCRIPTION);
 
@@ -284,6 +355,7 @@ PushGenerator.prototype.updateActionState = function() {
     self.subscribeElement_.disabled = false;
     self.displayElement_.disabled = true;
     self.sendElement_.disabled = true;
+    self.displayMsgElement_.disabled = true;
 
     self.addSubscriptionRequirement();
   });

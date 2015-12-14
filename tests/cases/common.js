@@ -12,6 +12,19 @@ if (!Array.prototype.hasOwnProperty('includes')) {
   };
 }
 
+if (!String.prototype.hasOwnProperty('padRight')) {
+  String.prototype.padRight = function(length, character) {
+    if (length <= this.length)
+      return this;
+
+    var string = this;
+    for (var i = this.length; i < length; ++i)
+      string += character;
+
+    return string;
+  }
+}
+
 // Returns the value of |element|.
 function getElementValue(element) {
   switch (element.tagName) {

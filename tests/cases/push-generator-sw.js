@@ -10,3 +10,13 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(clients.claim());
 });
 
+self.addEventListener('push', function(event) {
+  if (event.data)
+    console.log(event.data.text());
+
+  event.waitUntil(
+    registration.showNotification('Hello', {
+      body: 'world'
+    })
+  );
+});

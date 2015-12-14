@@ -2,29 +2,6 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
-if (!String.prototype.hasOwnProperty('padRight')) {
-  String.prototype.padRight = function(length, character) {
-    if (length <= this.length)
-      return this;
-
-    var string = this;
-    for (var i = this.length; i < length; ++i)
-      string += character;
-
-    return string;
-  }
-}
-
-// Converts the |data| from an URL-safe base64 encoded string to an ArrayBuffer
-// holding the same information.
-function fromBase64Url(data) {
-  var input = data.padRight(data.length + (4 - data.length % 4) % 4, '=')
-                  .replace(/\-/g, '+')
-                  .replace(/_/g, '/');
-
-  return toArrayBuffer(atob(input));
-}
-
 // Converts |arrayBuffer| to a string, assuming ASCII content.
 function toString(arrayBuffer) {
   return String.fromCharCode.apply(null, new Uint8Array(arrayBuffer));
@@ -60,10 +37,13 @@ cryptographer.setSalt(fromBase64Url(REFERENCE.salt));
 // Note that the reference vector does not use an authentication secret.
 cryptographer.authenticationSecret_ = new ArrayBuffer(0);
 
-cryptographer.encrypt(toArrayBuffer(REFERENCE.plaintext)).then(function(ciphertext) {
-  console.log('[1a] Ciphertext (' + ciphertext.byteLength + '): ', toBase64Url(ciphertext));
+cryptographer.encrypt(toArrayBuffer(REFERENCE.plaintext)).then(function(data) {
+  console.log('[1a] Ciphertext (' + data.ciphertext.byteLength + '): ', toBase64Url(data.ciphertext));
 
-  cryptographer.decrypt(ciphertext).then(function(plaintext) {
+  console.log('[1a] Public key: ' + data.dh);
+  console.log('[1a] Salt: ' + data.salt);
+
+  cryptographer.decrypt(data.ciphertext).then(function(plaintext) {
     console.log('[1b] Plaintext (' + plaintext.byteLength + '): ', toString(plaintext));
   });
 
@@ -75,8 +55,8 @@ cryptographer.encrypt(toArrayBuffer(REFERENCE.plaintext)).then(function(cipherte
 cryptographer.decrypt(fromBase64Url(REFERENCE.ciphertext)).then(function(plaintext) {
   console.log('[2a] Plaintext (' + plaintext.byteLength + '): ', toString(plaintext));
 
-  cryptographer.encrypt(plaintext).then(function(ciphertext) {
-    console.log('[2b] Ciphertext (' + ciphertext.byteLength + '): ', toBase64Url(ciphertext));
+  cryptographer.encrypt(plaintext).then(function(data) {
+    console.log('[2b] Ciphertext (' + data.ciphertext.byteLength + '): ', toBase64Url(data.ciphertext));
   });
 
 }).catch(function(error) {

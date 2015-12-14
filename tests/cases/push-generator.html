@@ -3,7 +3,6 @@
       </style>
       <script src="/cases/common.js"></script>
       <script src="/cases/web-push-encryption.js"></script>
-      <script src="/cases/web-push-encryption-test.js"></script>
       <script src="/cases/push-generator.js"></script>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -28,7 +27,8 @@
               /* unsubscribe */ document.getElementById('action-unsubscribe'),
               /* subscribe */   document.getElementById('action-subscribe'),
               /* display */     document.getElementById('action-display'),
-              /* send */        document.getElementById('action-send'));
+              /* send */        document.getElementById('action-send'),
+              /* display-msg */ document.getElementById('action-display-msg'));
 
           generator.registerServiceWorker(location.pathname);
           generator.requestPermission();
@@ -76,7 +76,7 @@
           <li>
             <label for="protocol">Protocol</label>
             <select id="protocol">
-              <option data-id="0" value="gcm">GCM protocol</option>
+              <!--<option data-id="0" value="gcm">GCM protocol</option>-->
               <option data-id="1" value="web_push">Web Push protocol</option>
             </select>
           </li>
@@ -85,27 +85,24 @@
             <select id="payload">
               <option data-id="0" value="none">No payload</option>
               <option data-id="1" value="text">Textual payload</option>
-              <option data-id="2" value="json">JSON payload</option>
-              <option data-id="3" value="binary">Binary payload</option>
-              <option data-custom value="custom">Custom text</option>
+              <option data-id="2" value="text_padding">Textual payload (w/ padding)</option>
             </select>
-            <input id="payload_custom" type="text" />
           </li>
           <li>
             <label for="encryption">Encryption</label>
             <select id="encryption">
               <option data-id="0" value="valid">Valid</option>
-              <option data-id="1" value="invalid_salt">Invalid salt</option>
+              <!--<option data-id="1" value="invalid_salt">Invalid salt</option>
               <option data-id="2" value="invalid_public_key">Invalid public key</option>
               <option data-id="3" value="invalid_payload">Invalid payload (garbage)</option>
-              <option data-id="4" value="invalid_records">Invalid payload (multiple records)</option>
-              <option data-id="5" value="invalid_record_size">Invalid payload (record size)</option>
+              <option data-id="5" value="invalid_record_size">Invalid payload (record size)</option>-->
             </select>
           </li>
         </ol>
 
         <p>
           <button id="action-send">Send the push message</button>
+          <button id="action-display-msg">Display message</button>
         </p>
       </div>
       <div id="subscription-info-dialog" class="dialog-content">
@@ -113,4 +110,10 @@
         <p><strong>Endpoint</strong>: <span id="endpoint">[undefined]</span></p>
         <p><strong>p256dh</strong>: <span id="p256dh">[undefined]</span></p>
         <p><strong>auth</strong>: <span id="auth">[undefined]</span></p>
+      </div>
+      <div id="message-info-dialog" class="dialog-content">
+        <h2>Message information</h2>
+        <p id="endpoint">[undefined]</p>
+        <p id="headers">[undefined]</p>
+        <p id="body">[undefined]</p>
       </div>

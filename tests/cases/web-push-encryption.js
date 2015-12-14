@@ -13,6 +13,16 @@ function toBase64Url(arrayBuffer, start, end) {
                .replace(/\//g, '_');
 }
 
+// Converts the |data| from an URL-safe base64 encoded string to an ArrayBuffer
+// holding the same information.
+function fromBase64Url(data) {
+  var input = data.padRight(data.length + (4 - data.length % 4) % 4, '=')
+                  .replace(/\-/g, '+')
+                  .replace(/_/g, '/');
+
+  return toArrayBuffer(atob(input));
+}
+
 // Converts the string |data| to an ArrayBuffer. All characters in the string
 // are expected to be in range of [0, 255].
 function toArrayBuffer(data) {
@@ -269,7 +279,9 @@ WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
   if (typeof paddingBytes != 'number' || paddingBytes < 0 || paddingBytes > 255)
     throw new Error('The number of padding bytes must be between 0 and 255.');
 
-  var self = this;
+  var ciphertext = null,
+      self = this;
+
   return this.deriveSharedSecret().then(function(sharedSecret) {
     return self.deriveEncryptionKeys(sharedSecret);
 
@@ -289,6 +301,29 @@ WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
 
     return crypto.subtle.encrypt(
         encryptionInfo, keys.contentEncryptionKey, record);
+
+  }).then(function(decrypted) {
+    ciphertext = decrypted;
+
+    if (self.senderKeys_.publicKey instanceof ArrayBuffer)
+      return self.senderKeys_.publicKey;
+
+    return crypto.subtle.exportKey('jwk', self.senderKeys_.publicKey).then(function(jwk) {
+      // Create the public key in uncompressed point form. Surely there must be
+      // a better way of doing this?
+      var publicKey = new Uint8Array(65);
+      publicKey.set([0x04]);
+      publicKey.set(new Uint8Array(fromBase64Url(jwk.x)), 1);
+      publicKey.set(new Uint8Array(fromBase64Url(jwk.y)), 33);
+
+      return publicKey;
+    });
+  }).then(function(publicKey) {
+    return {
+      ciphertext: ciphertext,
+      salt: toBase64Url(self.salt_),
+      dh: toBase64Url(publicKey)
+    };
   });
 };
 
