@@ -8,5 +8,9 @@
     "title": "Push Message Generator",
     "description": "A tool for dynamically creating Push Messages.",
     "manifest": "/push-generator/push-generator-manifest.json"
+  },
+  "push-encryption-verifier.html": {
+    "title": "Push Encryption Verifier",
+    "description": "A tool for verifying Web Push encryption implementations."
   }
 }

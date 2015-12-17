@@ -2,6 +2,8 @@
 .test-case h2, .dialog h2 { padding-top: 0px; }
 .test-case p, .dialog p { padding: 0 16px; }
 
+.test-case.intro > p { margin-top: 0; }
+
 /** Option lists **/
 .test-case ol {
   margin: 0 0 8px 0;
@@ -28,6 +30,10 @@
 .test-case li > input[type="checkbox"] {
   margin-left: 0px;
   flex: none;
+}
+
+.test-case li.no-label {
+  padding-left: 130px;
 }
 
 .requirements {
