@@ -166,6 +166,8 @@ PushGenerator.prototype.sendMessage = function() {
   }).then(function(response) {
     if (!response.ok) {
       console.warn(response);
+      response.text().then(function(text) { console.warn(text); });
+
       throw new Error('The server was unable to POST the push message.');
     }
 
@@ -299,6 +301,7 @@ PushGenerator.prototype.doCreateHeaders = function(payload, subscription, settin
     return {};  // no payload headers are necessary
 
   return {
+    'Content-Encoding': 'aesgcm128',
     'Encryption': 'salt="' + payload.salt + '"',
     'Crypto-Key': 'dh="' + payload.dh + '"'
   };
