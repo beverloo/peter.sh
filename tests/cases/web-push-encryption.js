@@ -168,8 +168,10 @@ WebPushEncryption.prototype.setSalt = function(salt) {
 // Sets the authentication secret to use for creating the payload to |secret|,
 // which must be an ArrayBuffer having at least 16 bytes of data.
 WebPushEncryption.prototype.setAuthenticationSecret = function(secret) {
-  if (!(secret instanceof ArrayBuffer) ||
-      secret.byteLength != WebPushEncryption.MIN_AUTH_SECRET_BYTES) {
+  if (!(secret instanceof ArrayBuffer)) {
+    // TODO(peter): Re-enable the following check when Firefox is updated.
+    // secret.byteLength != WebPushEncryption.MIN_AUTH_SECRET_BYTES
+
     throw new Error('The secret is expected to be a >=16-byte ArrayBuffer.');
   }
 

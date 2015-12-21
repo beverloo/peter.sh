@@ -46,7 +46,7 @@ if (!isWhitelisted($endpoint))
 if (strpos($endpoint, 'google') !== false)
   $headers['Authorization'] = 'key=AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
 
-$optionalHeaders = ['Encryption', 'Crypto-Key'];
+$optionalHeaders = ['Content-Encoding', 'Encryption', 'Crypto-Key'];
 
 foreach ($optionalHeaders as $header) {
   $key = toHeaderName($header);
