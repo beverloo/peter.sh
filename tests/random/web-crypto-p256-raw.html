@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Web Crypto uncompressed P-256 point import test</title>
+  </head>
+  <body>
+    <p>
+      Supporting "raw" import/export of P-256 keys in uncompressed format?
+      <span id="result">UNKNOWN</span>
+    </p>
+    <script>
+      function unsafeToArrayBuffer(data) {
+        var buffer = new ArrayBuffer(data.length),
+            bufferView = new Uint8Array(buffer);
+
+        for (var i = 0; i < data.length; ++i)
+          bufferView[i] = data.charCodeAt(i);
+
+        return buffer;
+      }
+
+      var result = document.getElementById('result');
+      result.textContent = 'NO';
+
+      (function() {
+        // Base64 encoded NIST P-256 public key in uncompressed form.
+        var KEY = "BE6jQ5Gqc4hUVLxF3z/cxKcCYvpGIf/iW1eQWQw0CkvZJl7ys/mobilZqW" +
+                  "DZAyNGXWDNSpDTFMXeP4aa0NS/bBA=";
+
+        var keyBuffer = unsafeToArrayBuffer(atob(KEY));
+        var algorithm = { name: 'ECDH', namedCurve: 'P-256' };
+
+        crypto.subtle.importKey('raw', keyBuffer, algorithm, true, []).then(function(key) {
+          crypto.subtle.exportKey('raw', key).then(function(raw) {
+            var encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(raw)));
+            if (encoded == KEY)
+              result.textContent = 'YES';
+          }).catch(function(error) {
+            console.log('Unable to export the key:', error);
+          });
+              }).catch(function(error) {
+          console.log('Unable to import the key:', error);
+        });
+
+      })();
+    </script>
+  </body>
+</html>
