@@ -80,8 +80,8 @@ HKDF.prototype.extract = function(rawInfo, byteLength) {
 
   return this.extractPromise_.then(function(prkHmac) {
     return prkHmac.sign(info);
-  }).then(function(hkdf) {
-    return hkdf.slice(0, byteLength);
+  }).then(function(hash) {
+    return hash.slice(0, byteLength);
   });
 };
 
@@ -288,6 +288,8 @@ WebPushEncryption.prototype.deriveEncryptionKeys = function(sharedSecret) {
 
       return Promise.all([
         hkdf.extract(cekInfo, 16).then(function(bits) {
+          self._KEY = bits;  // XXX - exposed for debugging reasons (cek)
+
           return crypto.subtle.importKey(
               'raw', bits, 'AES-GCM', false, ['encrypt', 'decrypt']);
         }),
@@ -328,14 +330,14 @@ WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
     // padding, followed by a number of NULL bytes for the padding, followed by
     // the actual content of the plaintext.
     var record = new Uint8Array(1 + paddingBytes + plaintext.byteLength);
-    record.set([ 0 ]);
+    record.set([ paddingBytes ]);
     record.set(new Uint8Array(plaintext), 1 + paddingBytes);
 
     return crypto.subtle.encrypt(
         encryptionInfo, keys.contentEncryptionKey, record);
 
-  }).then(function(decrypted) {
-    ciphertext = decrypted;
+  }).then(function(encrypted) {
+    ciphertext = encrypted;
 
     if (self.senderKeys_.publicKey instanceof ArrayBuffer)
       return self.senderKeys_.publicKey;
