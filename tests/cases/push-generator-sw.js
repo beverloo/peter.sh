@@ -14,7 +14,7 @@ self.addEventListener('push', function(event) {
   var message = '[empty payload]';
 
   if (event.data)
-    message = event.data.text();
+    message = 'payload: ' + event.data.text();
 
   event.waitUntil(
     registration.showNotification('Push Generator', {

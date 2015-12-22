@@ -43,9 +43,6 @@ $headers = [];
 if (!isWhitelisted($endpoint))
   fatalError('403 Forbidden', 'The endpoint has not been whitelisted. Send a PR?');
 
-if (strpos($endpoint, 'google') !== false)
-  $headers['Authorization'] = 'key=AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
-
 $optionalHeaders = ['Content-Encoding', 'Encryption', 'Crypto-Key'];
 
 foreach ($optionalHeaders as $header) {
@@ -53,6 +50,14 @@ foreach ($optionalHeaders as $header) {
   if (array_key_exists($key, $_SERVER))
     $headers[$header] = $_SERVER[$key];
 }
+
+if (strpos($endpoint, 'google') !== false) {
+  $headers['Authorization'] = 'key=AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
+
+  // TODO(peter): Work with the GCM team to fix this.
+  unset($headers['Content-Encoding']);
+}
+
 
 $rawData = file_get_contents('php://input');
 
