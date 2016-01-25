@@ -280,7 +280,8 @@ GeneratorBase.prototype.getField = function(state, name, defaultValue) {
       for (var index = 0; index < buttons.length; ++index) {
         actions.push({
           action: index,
-          title: buttons[index]
+          title: buttons[index],
+          icon: '/resources/icons/1.png'
         });
       }
 
