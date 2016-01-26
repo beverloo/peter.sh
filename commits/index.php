@@ -44,7 +44,8 @@ if ($_SERVER['QUERY_STRING'] == 'rss') {
 ?>
     <item>
       <title><?php echo htmlentities($description, ENT_QUOTES); ?></title>
-      <description><?php echo $commit['project'] . ' (' . substr($commit['revision_sha'], 0, 7) . ') by ' . $commit['author']; ?>.</description>
+      <description><?php echo $commit['project'] . ' (' . substr($commit['revision_sha'], 0, 7) . ') by ' . $commit['author']; ?>.<br/>
+      <?php echo htmlspecialchars($message); ?></description>
       <link><?php echo htmlentities($commit['url']); ?></link>
       <guid><?php echo htmlentities($commit['url']); ?></guid>
       <pubDate><?php echo date(DateTime::RSS, strtotime($commit['revision_date'])); ?></pubDate>
