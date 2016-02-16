@@ -3,19 +3,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-$database = new Database();
-
-// @param $start_date ("YYYY-MM-DD") - First day to return commits for.
-// @param $end_date ("YYYY-MM-DD") - Last day to return commits for.
-function GetCommits($start_date, $end_date, $uncheckedProjects) {
-    global $database;
-
-    $projects = array();
-    foreach ($uncheckedProjects as $project) {
-        if (is_numeric($project))
-            $projects[] = $project;
-    }
-
+function GetCommits($database) {
     $commits = $database->query('
         SELECT
             tracking_revisions.revision_sha,
@@ -34,9 +22,8 @@ function GetCommits($start_date, $end_date, $uncheckedProjects) {
         LEFT JOIN
             tracking_projects ON tracking_projects.project_id = tracking_revisions.project_id
         WHERE
-            DATE(tracking_flagged.revision_date) >= "' . $start_date . '" AND
-            DATE(tracking_flagged.revision_date) <= "' . $end_date . '" AND
-            tracking_flagged.revision_project_id IN (' . implode(', ', $projects) . ')
+            DATE(tracking_flagged.revision_date) >= (
+                SELECT DATE_SUB(MAX(revision_date), INTERVAL 2 WEEK) FROM tracking_flagged)
         ORDER BY
             tracking_flagged.revision_date DESC');
 

@@ -10,14 +10,8 @@ Header('Access-Control-Allow-Origin: *');
 
 $version = trim(file_get_contents(__DIR__ . '/../VERSION'));
 
-$start_date = date('Y-m-d', strtotime('-2 weeks'));
-$end_date = date('Y-m-d');
-
-$projects = array(1, 2, 3, 4);
-if (isset ($_GET['projects']))
-    $projects = explode(',', $_GET['projects']);
-
-$commits = GetCommits($start_date, $end_date, $projects);
+$database = new Database();
+$commits = GetCommits($database);
 
 if ($_SERVER['QUERY_STRING'] == 'rss') {
   $first_commit = current($commits);
