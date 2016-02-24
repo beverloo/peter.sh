@@ -152,6 +152,7 @@ GeneratorBase.FIELD_TYPE_TIME_OFFSET = 4;
 
 GeneratorBase.SEPARATOR_FIELD = ';;';
 GeneratorBase.SEPARATOR_VALUE = '=';
+GeneratorBase.SEPARATOR_MULTI_VALUE = '$$';
 
 GeneratorBase.prototype.serialize = function(state) {
   var serialization = [];
@@ -278,11 +279,14 @@ GeneratorBase.prototype.getField = function(state, name, defaultValue) {
           actions = [];
 
       for (var index = 0; index < buttons.length; ++index) {
-        actions.push({
+        var values = buttons[index].split(GeneratorBase.SEPARATOR_MULTI_VALUE);
+        var action = {
           action: index,
-          title: buttons[index],
-          icon: '/resources/icons/1.png'
+          title: values[0],
         });
+        if (values.length > 1)
+          action.icon = values[1];
+        actions.push(action);
       }
 
       return actions;
