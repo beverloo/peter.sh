@@ -2,75 +2,155 @@
         
       </style>
       <script src="/cases/common.js"></script>
-      <script src="/cases/web-push-encryption.js"></script>
+      <script src="/cases/web-push-encryption-v3.js"></script>
       <script src="/cases/push-encryption-verifier.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var requirementsElement = document.getElementById('requirements'),
+              updateButtonElement = document.getElementById('update-button'),
+              element = document.getElementById('test-case');
+
+          var verifier = new PushEncryptionVerifier(requirementsElement, element);
+
+          updateButtonElement.addEventListener('click', function() {
+            verifier.update();
+          });
+
+          verifier.deserialize(document.location.hash);
+          verifier.setFields({
+            sender_public: ['sender_public', GeneratorBase.FIELD_TYPE_STRING],
+            sender_private: ['sender_private', GeneratorBase.FIELD_TYPE_STRING],
+            receiver_public: ['receiver_public', GeneratorBase.FIELD_TYPE_STRING],
+            salt: ['salt', GeneratorBase.FIELD_TYPE_STRING],
+            auth_secret: ['auth_secret', GeneratorBase.FIELD_TYPE_STRING],
+            padding: ['padding', GeneratorBase.FIELD_TYPE_STRING],
+            plaintext: ['plaintext', GeneratorBase.FIELD_TYPE_STRING]
+          });
+
+          verifier.update();
+        });
+      </script>
       <div class="test-case intro">
-        <ul id="requirements" class="requirements">
-          <li>Unable to execute the JavaScript code.</li>
-        </ul>
         <p>
           Implementing support for <a href="https://tools.ietf.org/html/draft-ietf-webpush-encryption">
-          Web Push Encryption</a> can be tricky as it involves a lot of steps. This tool will tell
-          you the intermediate values based on the input keys, which should aid step-by-step
-          debugging in case <em>it's not working</em>.
+          Web Push Encryption</a> involves a
+          <a href="https://docs.google.com/document/d/1_kWRLJHRYN0KH73WipFyfIXI1UzZ5IyOYSs-y_mLxEE/edit">
+          series of steps</a>. This tool exists to make debugging your implementation easier by,
+          given the input keying material, sharing both the ciphertext and the intermediate values
+          that will be used in the encryption.
         </p>
       </div>
     </section>
     <section>
-      <div class="test-case">
+      <div class="test-case" id="test-case">
         <h2>Input variables</h2>
         <p>
-          The keys and auth secret must either be base64url encoded or hex values. Public
-          keys must be given as <a href="#" id="public-info">P-256 uncompressed EC points</a>,
-          and the private key must be given as <a href="#" id="private-info">ASN.1 PrivateKeyInfo</a>.
+          Public keys must be given as <a href="#" id="public-info">P-256 uncompressed EC points</a>
+          whereas the private key must be given as a <a href="#" id="private-info">
+          32-octet point</a>. Both the salt and auth secret must be 16 bytes in size. All values, except for the plaintext data, must be base64 encoded, optionally using the URL-safe
+          alphabet.
         </p>
         <ol>
           <li>
             <label for="sender_public">Sender keys</label>
-            <input type="text" id="sender_public" placeholder="Public key (uncompressed EC points form)" />
+            <input type="text" id="sender_public" placeholder="Sender's public key" value="BG3OGHrl3YJ5PHpl0GSqtAAlUPnx1LvwQvFMIc68vhJU6nIkRzPEqtCduQz8wQj0r71NVPzr7ZRk2f-fhsQ5pK8" />
           </li>
           <li class="no-label">
-          	<input type="text" id="sender_private" placeholder="Private key (NIST P-256)" />
+          	<input type="text" id="sender_private" placeholder="Sender's private key" value="Dt1CLgQlkiaA-tmCkATyKZeoF1-Gtw1-gdEP6pOCqj4" />
           </li>
           <li>
-            <label for="recipient_public">Recipient key</label>
-            <input type="text" id="recipient_public" placeholder="Public key (uncompressed EC points form)" />
+            <label for="receiver_public">Receiver key</label>
+            <input type="text" id="receiver_public" placeholder="Receiver's public key" value="BOLcHOg4ajSHR6BjbSBeX_6aXjMu1V5RrUYXqyV_FqtQSd8RzdU1gkMv1DlRPDIUtFK6Nd16Jql0eSzyZh4V2uc"/>
+          </li>
+          <li>
+            <label for="salt">Salt</label>
+            <input type="text" id="salt" value="4CQCKEyyOT_LysC17rsMXQ" />
           </li>
           <li>
             <label for="auth_secret">Auth secret</label>
-            <input type="text" id="auth_secret" placeholder="16 cryptographically secure random bytes" />
+            <input type="text" id="auth_secret" value="r9kcFt8-4Q6MnMjJHqJoSQ" />
           </li>
           <li>
-            <label for="data">Data</label>
-            <input type="text" id="data" placeholder="Plaintext, unencoded data." />
+            <label for="padding">Padding</label>
+            <input type="number" id="padding" min="0" max="65535" value="0" />
+          </li>
+          <li>
+            <label for="plaintext">Plaintext</label>
+            <input type="text" id="plaintext" value="Hello, world!" />
           </li>
         </ol>
 
-        <h2>Output</h2>
         <p>
-          Hellow :-) This isn't done yet.
+          <input type="button" id="update-button" value="Update" />
         </p>
 
-        <h2>
+        <h2>Output</h2>
+        <ul id="requirements" class="requirements">
+          <li>Unable to execute the JavaScript code.</li>
+        </ul>
+        <ol>
+          <li>
+            <label>IKM</label>
+            <input type="text" id="ikm" />
+          </li>
+          <li>
+            <label>PRK</label>
+            <input type="text" id="prk" />
+          </li>
+          <li>
+            <label>CEK info</label>
+            <input type="text" id="cek_info" />
+          </li>
+          <li>
+            <label>CEK</label>
+            <input type="text" id="cek" />
+          </li>
+          <li>
+            <label>Nonce info</label>
+            <input type="text" id="nonce_info" />
+          </li>
+          <li>
+            <label>Nonce</label>
+            <input type="text" id="nonce" />
+          </li>
+          <li>
+            <label>Ciphertext</label>
+            <input type="text" id="ciphertext" />
+          </li>
+        </ol>
       </div>
       <div id="public-info-dialog" class="dialog-content">
         <h2>NIST P-256 uncompressed EC points</h2>
         <p>
           A series of 65 bytes starting with <strong>0x04</strong> followed by two 32-byte points,
-          per <a href="http://www.secg.org/sec1-v2.pdf">SEC1 2.3.3</a>. The format given by the
-          W3C Push API's <code>PushSubscription.getKey()</code> method.
+          per <a href="http://www.secg.org/sec1-v2.pdf">SEC1 2.3.3</a>.
         </p>
         <p>
+          <strong>Note</strong>: This is the format given by the W3C Push API's
+          <code>PushSubscription.getKey()</code> method.
+        </p>
+        <p>
+          <strong>Note</strong>:
           When using <a href="https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html">
-          Web Crypto</a>, it can be derived by exporting the public key as JWK, then concatenating
-          <code>[0x04, base64url_decode(jwk.x), base64url_decode(jwk.y)]</code>.
+          Web Crypto</a>, keep in mind that not all browsers allow importing such keys. The points
+          can be written to the <code>`x`</code> and <code>`y`</code> properties in a JWK key, which
+          can be imported by all implementations.
         </p>
       </div>
       <div id="private-info-dialog" class="dialog-content">
-        <h2>ASN.1 PrivateKeyInfo</h2>
+        <h2>NIST P-256 Private Key</h2>
         <p>
-          A series of at least <b>??</b> bytes per the PrivateKeyInfo definition in
-          <a href="https://tools.ietf.org/html/rfc5208#section-5">RFC 5208</a>. The format given by
-          the Web Crypto API when exporting a private P-256 key in <core>"pkcs8"</core> format.
+          A series of <strong>32 bytes</strong> containing the private key that belongs to the given
+          public key. Only the sender's private key has to be known, since this verifies won't
+          decode the information again.
+        </p> 
+        <p>
+          <strong>Note</strong>:
+          When using <a href="https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html">
+          Web Crypto</a>, this is the value of the <code>`d`</code> property of an exported JWK key.
+        </p>
+        <p>
+          <strong>Note</strong>: Browsers do not give you the private key associated with a Push
+          API subscription.
         </p>
       </div>
