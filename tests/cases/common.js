@@ -93,7 +93,7 @@ RequirementsBase.prototype.satisfyRequirement = function(id) {
   this.requirementsChanged();
 };
 
-RequirementsBase.prototype.verifyRequirements = function() {
+RequirementsBase.prototype.verifyRequirements = function(silent) {
   var unsatisfiedRequirements = '';
   for (var id in this.requirements_)
     unsatisfiedRequirements += '- ' + this.requirements_[id] + '\n';
@@ -101,8 +101,18 @@ RequirementsBase.prototype.verifyRequirements = function() {
   if (!unsatisfiedRequirements.length)
     return true;
 
-  alert(unsatisfiedRequirements);
+  if (!silent)
+    alert(unsatisfiedRequirements);
+
   return false;
+};
+
+RequirementsBase.prototype.resetRequirements = function() {
+  for (var id in this.satisfied_)
+    this.requirements_[id] = this.satisfied_[id];
+
+  this.satisfied_ = {};
+  this.requirementsChanged();
 };
 
 RequirementsBase.prototype.requirementsChanged = function() {
