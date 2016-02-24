@@ -282,8 +282,8 @@ GeneratorBase.prototype.getField = function(state, name, defaultValue) {
         var values = buttons[index].split(GeneratorBase.SEPARATOR_MULTI_VALUE);
         var action = {
           action: index,
-          title: values[0],
-        });
+          title: values[0]
+        };
         if (values.length > 1)
           action.icon = values[1];
         actions.push(action);
