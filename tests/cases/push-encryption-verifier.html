@@ -10,7 +10,12 @@
               updateButtonElement = document.getElementById('update-button'),
               element = document.getElementById('test-case');
 
-          var verifier = new PushEncryptionVerifier(requirementsElement, element);
+          var verifier = new PushEncryptionVerifier(requirementsElement, element, [
+            { element: document.getElementById('public-info'),
+              popup: document.getElementById('public-info-dialog') },
+            { element: document.getElementById('private-info'),
+              popup: document.getElementById('private-info-dialog') }
+          ]);
 
           updateButtonElement.addEventListener('click', function() {
             verifier.update();
