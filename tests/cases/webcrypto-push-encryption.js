@@ -27,8 +27,13 @@ const SALT_BYTES = 16;
 const AUTH_SECRET_BYTES = 16;
 
 // Cryptographer that's able to encrypt and decrypt messages per the Web Push protocol's encryption.
+// The cryptography is explained in ietf-webpush-encryption and ietf-httpbis-encryption-encoding:
 //
-// TODO: Add references to specifications to this comment.
+// https://tools.ietf.org/html/draft-ietf-webpush-encryption
+// https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding
+//
+// This implementation supports the drafts as of February 2016, requires an authentication secret
+// to be used and allows for record padding between 0 and 65535 octets.
 class WebPushCryptographer {
   // Constructs a new instance of the cryptographer. Both |senderKeys| and |receiverKeys| must be
   // instances of the KeyPair class, wherein the |senderKeys| must have a private key set. The
@@ -76,8 +81,20 @@ class WebPushCryptographer {
       return crypto.subtle.decrypt(algorithm, contentEncryptionKey, ciphertext);
 
     }).then(plaintext => {
-      // TODO: Get the data out of the record.
-      return plaintext;
+      const plaintextBuffer = new Uint8Array(plaintext);
+      if (plaintextBuffer.byteLength < 2)
+        throw new Error('The plaintext is expected to contain at least the padding bytes.');
+
+      const paddingLength = (plaintextBuffer[0] << 8) | plaintextBuffer[1];
+      if (plaintextBuffer.byteLength < 2 + paddingLength)
+        throw new Error('The plaintext does not contain enough data for the message\'s padding.');
+
+      for (let i = 2; i < paddingLength + 2; ++i) {
+        if (plaintextBuffer[i] != 0)
+          throw new Error('The padding must only contain NULL-bytes.');
+      }
+
+      return plaintextBuffer.slice(2);
     });
   }
 
