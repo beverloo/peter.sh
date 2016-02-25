@@ -2,6 +2,17 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
+function toBase64Url(arrayBuffer, start, end) {
+  start = start || 0;
+  end = end || arrayBuffer.byteLength;
+
+  var partialBuffer = new Uint8Array(arrayBuffer.slice(start, end));
+  var base64 = btoa(String.fromCharCode.apply(null, partialBuffer));
+  return base64.replace(/=/g, '')
+               .replace(/\+/g, '-')
+               .replace(/\//g, '_');
+}
+
 function PushGenerator(requirementsElement, element) {
   NotificationGeneratorBase.call(
       this, requirementsElement, element, 'push-generator-sw.js');
@@ -281,13 +292,19 @@ PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
       break;
   }
 
-  var encryptor = new WebPushEncryption();
-  encryptor.setRecipientPublicKey(subscription.getKey('p256dh'));
-  encryptor.setAuthenticationSecret(subscription.getKey('auth'));
-  encryptor.createSalt();
+  var promii = [ KeyPair.generate(), KeyPair.import(subscription.getKey('p256dh')) ];
+  return Promise.all(promii).then(function(keys) {
+    var cryptographer = new WebPushCryptographer(keys[0], keys[1], subscription.getKey('auth'));
+    var salt = crypto.getRandomValues(new Uint8Array(16));
 
-  return encryptor.createSenderKeys().then(function() {
-    return encryptor.encrypt(payload, paddingBytes);
+    var promii = [ cryptographer.encrypt(salt, payload, paddingBytes), keys[0].exportPublicKey() ];
+    return Promise.all(promii).then(function(data) {
+      return {
+        ciphertext: data[0],
+        salt: toBase64Url(salt),
+        dh: toBase64Url(data[1])
+      };
+    });
   });
 };
 
