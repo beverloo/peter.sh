@@ -170,7 +170,7 @@ WebPushEncryption.prototype.setSalt = function(salt) {
 WebPushEncryption.prototype.setAuthenticationSecret = function(secret) {
   if (!(secret instanceof ArrayBuffer)) {
     // TODO(peter): Re-enable the following check when Firefox is updated.
-    // secret.byteLength != WebPushEncryption.MIN_AUTH_SECRET_BYTES
+    secret.byteLength != WebPushEncryption.MIN_AUTH_SECRET_BYTES
 
     throw new Error('The secret is expected to be a >=16-byte ArrayBuffer.');
   }
@@ -227,6 +227,8 @@ WebPushEncryption.prototype.deriveSharedSecret = function() {
   });
 };
 
+var _sharedSecret = null, _nonce = null, _cek = null;
+
 // Drives the encryption keys to use for the payload - the content encryption
 // key, and the nonce (which will be used as the IV to AES-128-GCM). These
 // account for the CEK and Nonce info parameters that contain the public keys
@@ -267,11 +269,11 @@ WebPushEncryption.prototype.deriveEncryptionKeys = function(sharedSecret) {
     // cek_info = "Content-Encoding: aesgcm128" || 0x00 || context
     // nonce_info = "Content-Encoding: nonce" || 0x00 || context
 
-    var cekInfo = new Uint8Array(27 + 1 + context.byteLength);
+    var cekInfo = new Uint8Array(24 + 1 + context.byteLength);
     var nonceInfo = new Uint8Array(23 + 1 + context.byteLength);
 
-    cekInfo.set(UTF8.encode('Content-Encoding: aesgcm128'));
-    cekInfo.set(context, 28);
+    cekInfo.set(UTF8.encode('Content-Encoding: aesgcm'));
+    cekInfo.set(context, 25);
 
     nonceInfo.set(UTF8.encode('Content-Encoding: nonce'));
     nonceInfo.set(context, 24);
@@ -290,12 +292,16 @@ WebPushEncryption.prototype.deriveEncryptionKeys = function(sharedSecret) {
         hkdf.extract(cekInfo, 16).then(function(bits) {
           self._KEY = bits;  // XXX - exposed for debugging reasons (cek)
 
+          _cek = bits;
+
           return crypto.subtle.importKey(
               'raw', bits, 'AES-GCM', false, ['encrypt', 'decrypt']);
         }),
         hkdf.extract(nonceInfo, 12)
       ]);
     }).then(function(keys) {
+      _nonce = keys[1];
+
       return { contentEncryptionKey: keys[0],
                nonce: keys[1] };
     });
@@ -317,6 +323,7 @@ WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
       self = this;
 
   return this.deriveSharedSecret().then(function(sharedSecret) {
+    _sharedSecret = sharedSecret;
     return self.deriveEncryptionKeys(sharedSecret);
 
   }).then(function(keys) {
@@ -329,9 +336,9 @@ WebPushEncryption.prototype.encrypt = function(plaintext, paddingBytes) {
     // Create the record for the data, which is a byte for the length of the
     // padding, followed by a number of NULL bytes for the padding, followed by
     // the actual content of the plaintext.
-    var record = new Uint8Array(1 + paddingBytes + plaintext.byteLength);
+    var record = new Uint8Array(2 + paddingBytes + plaintext.byteLength);
     record.set([ paddingBytes ]);
-    record.set(new Uint8Array(plaintext), 1 + paddingBytes);
+    record.set(new Uint8Array(plaintext), 2 + paddingBytes);
 
     return crypto.subtle.encrypt(
         encryptionInfo, keys.contentEncryptionKey, record);
@@ -378,3 +385,29 @@ WebPushEncryption.prototype.decrypt = function(ciphertext) {
     return recordBuffer.slice(1 + paddingBytes);
   });
 };
+
+/**
+ *
+ *
+ */
+
+var webPushCrypto = new WebPushEncryption();
+
+webPushCrypto.setSalt(fromBase64Url('4CQCKEyyOT_LysC17rsMXQ'));
+webPushCrypto.setAuthenticationSecret(fromBase64Url('r9kcFt8-4Q6MnMjJHqJoSQ'));
+
+webPushCrypto.setSenderKeys(
+    fromBase64Url('Dt1CLgQlkiaA-tmCkATyKZeoF1-Gtw1-gdEP6pOCqj4'),
+    fromBase64Url('BG3OGHrl3YJ5PHpl0GSqtAAlUPnx1LvwQvFMIc68vhJU6nIkRzPEqtCduQz8wQj0r71NVPzr7ZRk2f-fhsQ5pK8'));
+
+webPushCrypto.setRecipientPublicKey(
+    fromBase64Url('BOLcHOg4ajSHR6BjbSBeX_6aXjMu1V5RrUYXqyV_FqtQSd8RzdU1gkMv1DlRPDIUtFK6Nd16Jql0eSzyZh4V2uc'));
+
+webPushCrypto.encrypt('Hello, world!', 1 /* padding bytes */).then(ciphertext => {
+
+  console.log('Shared Secret:', toBase64Url(_sharedSecret));
+  console.log('CEK:', toBase64Url(_cek));
+  console.log('Nonce:', toBase64Url(_nonce));
+
+  console.log(toBase64Url(ciphertext.ciphertext));
+});

@@ -139,9 +139,9 @@ class WebPushCryptographer {
 
       // The first HKDF is fixed between the sender and receiver, whereas the second, per-message
       // HKDF incorporates the salt that is expected to be unique per message.
-      const hkdf = new HKDF(ikm, ikm);//this.authSecret_);
+      const hkdf = new HKDF(ikm, this.authSecret_);
       return hkdf.extract(authInfo, 32).then(prk => {
-        const messageHkdf = new HKDF(ikm, salt);
+        const messageHkdf = new HKDF(prk, salt);
 
         return Promise.all([
           messageHkdf.extract(contentEncryptionKeyInfo, 16).then(bits =>
