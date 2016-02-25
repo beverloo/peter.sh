@@ -11,8 +11,16 @@ function toBase64Url(arrayBuffer) {
                .replace(/\//g, '_');
 }
 
-function PushEncryptionVerifier(requirementsElement, element) {
+function PushEncryptionVerifier(requirementsElement, element, popupBindings) {
   GeneratorBase.call(this, requirementsElement, element);
+
+  popupBindings.forEach(function(binding) {
+    binding.element.addEventListener('click', function(event) {
+      DisplayDialog(binding.popup.cloneNode(true /* deep */));
+
+      event.preventDefault();
+    });
+  });
 
   this.addRequirement(PushEncryptionVerifier.REQUIREMENT_SENDER_PUBLIC_KEY,
                       'Requires a valid public key to be set for the sender.');
