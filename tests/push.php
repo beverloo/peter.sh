@@ -20,6 +20,7 @@ function isWhitelisted($endpoint) {
   $endpointWhitelist = [
     'https://jmt17.google.com/gcm/demo-webpush-00/',
     'https://updates.push.services.mozilla.com/push/',
+    'https://updates-autopush.stage.mozaws.net',
   ];
 
   $filtered = array_filter($endpointWhitelist, function($entry) use ($endpoint) {
