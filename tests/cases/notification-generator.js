@@ -20,6 +20,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     body: this.getField(state, 'body', ''),
     tag: this.getField(state, 'tag', ''),
     icon: this.getField(state, 'icon', ''),
+    smallIcon: '/resources/icons/5.png',
     // sound
     vibrate: this.getField(state, 'vibrate', undefined),
     timestamp: this.getField(state, 'timestamp', undefined),
