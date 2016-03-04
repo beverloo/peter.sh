@@ -30,12 +30,13 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     // noscreen
     requireInteraction: this.getField(state, 'requireInteraction', false),
     sticky: this.getField(state, 'sticky', false),
+    notificationCloseEvent: this.getField(state, 'notificationCloseEvent', false),
 
     data: {
       options: {
         action: this.getField(state, 'action', 'default'),
         close: this.getField(state, 'close', true),
-
+        notificationCloseEvent: this.getField(state, 'notificationCloseEvent', false),
         url: document.location.toString(),
       }
     }
