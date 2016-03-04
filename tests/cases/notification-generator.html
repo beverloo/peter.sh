@@ -32,6 +32,8 @@
             renotify: ['renotify', GeneratorBase.FIELD_TYPE_BOOL],
             requireInteraction: ['require_interaction',
                                  GeneratorBase.FIELD_TYPE_BOOL],
+            notificationCloseEvent: ['notification_close_event',
+                                 GeneratorBase.FIELD_TYPE_BOOL],
 
             // Reaction settings
             action: ['action', GeneratorBase.FIELD_TYPE_STRING],
@@ -198,6 +200,10 @@
           <li>
             <label for="sticky" not-implemented title="Not implemented by Firefox and Chrome.">Sticky</label>
             <input type="checkbox" id="sticky" />
+          </li>
+           <li>
+            <label for="notification_close_event" not-implemented title="Not implemented by Firefox.">notificationclose event</label>
+            <input type="checkbox" id="notification_close_event" />
           </li>
         </ol>
 
