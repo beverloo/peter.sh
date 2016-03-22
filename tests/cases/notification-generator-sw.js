@@ -4,7 +4,7 @@
 
 function firstWindowClient() {
   return clients.matchAll({ type: 'window' }).then(function(windowClients) {
-    return windowClients.length ? windowClients[0] : null;
+    return windowClients.length ? windowClients[0] : Promise.reject("No clients");
   });
 }
 
@@ -48,9 +48,6 @@ self.addEventListener('notificationclick', function(event) {
 
   if (options.action == 'message') {
     firstWindowClient().then(function(client) {
-      if (!client)
-        return;
-
       var message = 'Clicked on "' + notification.title + '"';
       if (event.action)
         message += ' (action "' + event.action + '")';
@@ -64,15 +61,12 @@ self.addEventListener('notificationclick', function(event) {
   if (options.action == 'default' || options.action == 'focus-only') {
     promise =
         promise.then(function() { return firstWindowClient(); })
-               .then(function(client) {
-                 if (client)
-                  client.focus();
-               });
-  }
-
-  if (options.action == 'default' || options.action == 'open-only') {
-    promise =
-        promise.then(clients.openWindow(options.url));
+               .then(function(client) { return client.focus(); });
+    if (options.action == 'default') {
+      promise = promise.catch(function() { clients.openWindow(options.url); });
+    }
+  } else if (options.action == 'open-only') {
+    promise = promise.then(function() { clients.openWindow(options.url); });
   }
 
   event.waitUntil(promise);
@@ -84,14 +78,10 @@ self.addEventListener('notificationclose', function(event) {
   var message = 'Closed "' + notification.title + '"';
   
   firstWindowClient().then(function(client) {
-    if (!client)
-      return;
-    
-    
     // Available settings for |options.notificationCloseEvent| are:
     //  true: alert will be raised in the client to show the event firing.
     //  flase: no message will be sent back to the client 
-    if(options.notificationCloseEvent)
+    if (options.notificationCloseEvent)
       client.postMessage(message);
   });
 });
