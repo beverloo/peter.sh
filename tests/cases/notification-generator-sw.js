@@ -75,13 +75,15 @@ self.addEventListener('notificationclick', function(event) {
 self.addEventListener('notificationclose', function(event) {
   var notification = event.notification;
   var options = notification.data.options;
+
+  // Available settings for |options.notificationCloseEvent| are:
+  //  true: alert will be raised in the client to show the event firing.
+  //  flase: no message will be sent back to the client 
+  if (!options.notificationCloseEvent)
+    return;
+
   var message = 'Closed "' + notification.title + '"';
-  
   firstWindowClient().then(function(client) {
-    // Available settings for |options.notificationCloseEvent| are:
-    //  true: alert will be raised in the client to show the event firing.
-    //  flase: no message will be sent back to the client 
-    if (options.notificationCloseEvent)
-      client.postMessage(message);
+    client.postMessage(message);
   });
 });
