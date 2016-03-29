@@ -172,6 +172,14 @@ class CommandLineFlags extends Service {
 
         $stats = array('created' => 0, 'updated' => 0, 'removed' => 0);
 
+        // If more than 10% of the command line flags got removed, bail out because it's most likely
+        // a read error from the repository. This prevents wasting all modification times in the
+        // database, which used to happen rather commonly.
+        if (count($sourceFlags) <= 0.9 * count($databaseFlags)) {
+            Error('More than 10% of command line flags got removed, bailing out.');
+            return;
+        }
+
         foreach ($databaseFlags as $name => $switch) {
             if (!array_key_exists($name, $sourceFlags)) {
                 $removeStatement->bind_param('i', $switch['database_id']);
@@ -208,7 +216,7 @@ class CommandLineFlags extends Service {
     private function loadFlagsFromSource() {
         $files = $this->loadSwitchFiles();
         if (!count($files))
-            return;
+            return [];
 
         $blacklist = file(__DIR__ . '/blacklist.txt');
         foreach ($blacklist as $file) {
@@ -223,7 +231,7 @@ class CommandLineFlags extends Service {
         }
 
         if (!count($files))
-            return;
+            return [];
 
         $this->m_switches = array();
         $this->m_preProcessorStack = array();
