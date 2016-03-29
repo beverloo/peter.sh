@@ -1,0 +1,13 @@
+# Copyright 2016 Peter Beverloo. All rights reserved.
+# Use of this source code is governed by the MIT license, a copy of which can
+# be found in the LICENSE file.
+
+# Enable PHP errors and warnings
+php_flag display_startup_errors on
+php_flag display_errors on
+php_flag html_errors on
+php_value error_reporting -1
+
+# Disallow access to .git and .gitignore entirely.
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.gitignore
