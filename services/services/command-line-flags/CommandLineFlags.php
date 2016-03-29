@@ -20,7 +20,7 @@ class CommandLineFlags extends Service {
             FROM
                 chromium_switches
             WHERE
-                removed = "0000-00-00 00:00:00"
+                removed IS NULL
             GROUP BY
                 switch_sourcepath');
 
@@ -87,7 +87,8 @@ class CommandLineFlags extends Service {
             WHERE
                 chromium_switches.added >= "' . $sinceDate . '" OR
                 chromium_switches.updated >= "' . $sinceDate . '" OR
-                chromium_switches.removed >= "' . $sinceDate . '"
+                (chromium_switches.removed IS NOT NULL AND
+                 chromium_switches.removed >= "' . $sinceDate . '")
             ORDER BY
                 chromium_switches.switch_name ASC');
 
@@ -251,7 +252,7 @@ class CommandLineFlags extends Service {
             FROM
                 chromium_switches
             WHERE
-                chromium_switches.removed = "0000-00-00 00:00:00"
+                chromium_switches.removed IS NULL
             ORDER BY
                 chromium_switches.switch_name ASC');
 
