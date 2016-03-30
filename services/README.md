@@ -6,6 +6,7 @@ The purpose of this website is to ensure that the data used on various other par
 
 There are a number of services included in this repository.
 
+* **auto-deploy**. Updates the local Git checkout when changes have been pushed to the GitHub repository.
 * **command-line-flags**. Tracks and indexes the command line flags available to Chromium and Google Chrome.
 * **css-properties**. Tracks the list of CSS properties supported by Blink, Gecko and WebKit. Trident has to be updated manually.
 * **repository-tracker**. Tracks all commits to the Blink, Chromium, Skia and v8 repositories and stores them in a MySQL database.
