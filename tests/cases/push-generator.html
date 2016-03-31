@@ -44,16 +44,16 @@
           <li>
             <label for="authentication">Authentication</label>
             <select id="authentication">
-              <option data-id="0" value="manifest">gcm_sender_id in the manifest</option>
-              <option data-id="1" value="public_key">public key in PushManager.subscribe()</option>
-              <option data-id="2" value="none">None</option>
+              <option data-id="1" value="public-key">Application server's public key (webpush-vapid)</option>
+              <option data-id="2" value="sender-id">Proprietary GCM authentication (manifest)</option>
+              <option data-id="3" value="none">None</option>
             </select>
           </li>
           <li>
             <label for="source">Source</label>
             <select id="source">
-              <option data-id="0" value="document">From the document</option>
-              <option data-id="1" value="sw">From the Service Worker</option>
+              <option data-id="0" value="document">Document</option>
+              <option data-id="1" value="service-worker">Service Worker</option>
             </select>
           </li>
           <li>
@@ -63,9 +63,10 @@
         </ol>
 
         <p>
-          <button id="action-unsubscribe">Unsubscribe</button>
-          <button id="action-subscribe">Subscribe</button> —
+          <button id="action-subscribe">Subscribe</button>
+          <button id="action-unsubscribe">Unsubscribe</button> —
           <button id="action-display">Display subscription</button>
+          <img id="spinner" src="/resources/spinner.gif" />
         </p>
       </div>
     </section>
