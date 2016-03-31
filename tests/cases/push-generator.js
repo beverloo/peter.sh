@@ -203,6 +203,33 @@ SubscriptionGenerator.prototype.unsubscribeFromWorker = function() {
 
 // -------------------------------------------------------------------------------------------------
 
+function MessageGenerator() {}
+
+// Creates an encrypted message that can be distributed to the push service. The |payload| must be
+// an ArrayBuffer with the message's content, whereas |padding| must be the number of bytes of
+// padding to include with the message, in range of 0 - 65535. This method will return a promise
+// that will be resolved with the payload and used encryption keys.
+//
+// The message will be encrypted following the latest version of the specification:
+// https://tools.ietf.org/html/draft-ietf-webpush-encryption
+MessageGenerator.prototype.createMessage = function(subscription, payload, padding) {
+  return Promise.reject(new Error('Not yet implemented.'));
+};
+
+// -------------------------------------------------------------------------------------------------
+
+function RequestGenerator() {}
+
+// Creates the required information for a request to send |message| to the |subscription|. The
+// |protocol| must be one of { 'web-push', 'gcm' }, and the |authentication| must be one of the
+// following: { 'public-key', 'sender-id', 'none' }. Will return a promise that will be resolved
+// with the request information when the operation has completed.
+RequestGenerator.prototype.createRequest = function(subscription, message, protocol, authentication) {
+  return Promise.reject(new Error('Not yet implemented.'));
+};
+
+// -------------------------------------------------------------------------------------------------
+
 function PushGenerator(requirementsElement, element) {
   NotificationGeneratorBase.call(
       this, requirementsElement, element, 'push-generator-sw.js');
@@ -213,11 +240,14 @@ function PushGenerator(requirementsElement, element) {
                         'Requires a browser that supports push messaging payloads.');
   }
 
-  // Class responsible for managing subscriptions with the push service.
+  // Classes responsible for managing subscriptions, messages and requests with the push service.
   this.subscriptionGenerator_ = new SubscriptionGenerator();
+  this.messageGenerator_ = new MessageGenerator();
+  this.requestGenerator_ = new RequestGenerator();
 
   // Element that can be displayed when an asynchronous operation is in progress.
-  this.spinnerElement_ = document.getElementById('spinner');
+  this.subscriptionSpinnerElement_ = document.getElementById('subscription-spinner');
+  this.requestSpinnerElement_ = document.getElementById('request-spinner');
 
   this.unsubscribeElement_ = null;
   this.subscribeElement_ = null;
@@ -237,14 +267,26 @@ PushGenerator.prototype = Object.create(NotificationGeneratorBase.prototype);
 
 // Creates the loading spinner for the Subscription Options section of the page.
 PushGenerator.prototype.createSubscriptionSpinner = function() {
-  if (this.spinnerElement_)
-    this.spinnerElement_.style.visibility = 'visible';
+  if (this.subscriptionSpinnerElement_)
+    this.subscriptionSpinnerElement_.style.visibility = 'visible';
 };
 
 // Removes the loading spinner for the Subscription Options section of the page.
 PushGenerator.prototype.removeSubscriptionSpinner = function() {
-  if (this.spinnerElement_)
-    this.spinnerElement_.style.visibility = 'hidden';
+  if (this.subscriptionSpinnerElement_)
+    this.subscriptionSpinnerElement_.style.visibility = 'hidden';
+};
+
+// Creates the loading spinner for the Message and Request setting sections of the page.
+PushGenerator.prototype.createRequestSpinner = function() {
+  if (this.requestSpinnerElement_)
+    this.requestSpinnerElement_.style.visibility = 'visible';
+};
+
+// Removes the loading spinner for the Message and Request setting sections of the page.
+PushGenerator.prototype.removeRequestSpinner = function() {
+  if (this.requestSpinnerElement_)
+    this.requestSpinnerElement_.style.visibility = 'hidden';
 };
 
 // Reads the values from the Subscription Options section in the form and uses the subscription
@@ -304,195 +346,81 @@ PushGenerator.prototype.displaySubscription = function() {
   });
 };
 
+// Sends a message following the message and request settings to the push service, through a PHP
+// wrapper script that lives on the server.
 PushGenerator.prototype.sendMessage = function() {
-  var self = this;
-
-  this.sendElement_.disabled = true;
-  this.createMessage().then(function(message) {
-    if (!message)
-      return;  // an error message may already have been displayed.
-
-    var endpoint = message.endpoint;
-    if (endpoint.startsWith('https://android.googleapis.com/gcm/send/'))
-      endpoint = 'https://jmt17.google.com/gcm/demo-webpush-00/' + endpoint.substr(40);
-
-    var headers = message.headers;
-    headers['X-Endpoint'] = endpoint;
-
-    return fetch('/push.php', {
-      method: 'post',
-      headers: headers,
-      body: message.body
-    });
-
-  }).then(function(response) {
-    if (!response.ok) {
-      console.warn(response);
-      response.text().then(function(text) { console.warn(text); });
-
-      throw new Error('The server was unable to POST the push message.');
-    }
-
-  }).catch(function(error) {
-    alert('Unable to send a message: ' + error);
-
-  }).then(function() {
-    self.sendElement_.disabled = false;
-    document.location.hash =
-        self.serialize(self.computeState(false /* includeDefault */));
-
-  });
-};
-
-PushGenerator.prototype.displayMessage = function() {
-  var self = this;
-
-  this.displayMsgElement_.disabled = true;
-  this.createMessage().then(function(message) {
-    if (!message)
-      return;  // an error message may already have been displayed.
-
-    var content = document.getElementById('message-info-dialog').cloneNode(true /* deep */),
-        headers = [];
-
-    Object.keys(message.headers).forEach(function(headerName) {
-      headers.push(headerName + ': '  + message.headers[headerName]);
-    });
-
-    content.querySelector('#endpoint').textContent = message.endpoint;
-    content.querySelector('#headers').innerHTML = headers.join('<br />');
-    content.querySelector('#body').textContent = btoa(message.body);
-
-    DisplayDialog(content);
-
-  }).catch(function(error) {
-    alert('Unable to send a message: ' + error);
-
-  }).then(function() {
-    self.displayMsgElement_.disabled = false;
-    document.location.hash =
-        self.serialize(self.computeState(false /* includeDefault */));
-
-  });
-};
-
-PushGenerator.prototype.createMessage = function() {
   if (!this.verifyRequirements())
-    return Promise.resolve(null);
+    return;
 
+  var state = this.computeState(true /* includeDefault */);
+  var delay = this.getField(state, 'delay', '0');
+
+  this.createRequestSpinner();
+
+  this.createRequest().then(function(request) {
+    // TODO: Respect the artificial |delay|.
+    // TODO: Send the created message to the push service.
+
+  }).catch(function(error) {
+    alert('Unable to create the message: ' + error);
+
+  }).then(this.removeRequestSpinner.bind(this));
+};
+
+// Displays the message in a dialog as it would be send to the push service.
+PushGenerator.prototype.displayMessage = function() {
+  if (!this.verifyRequirements())
+    return;
+
+  this.createRequestSpinner();
+
+  this.createRequest().then(function(request) {
+    // TODO: Display the created message's information.
+
+  }).catch(function(error) {
+    alert('Unable to create the message: ' + error);
+
+  }).then(this.removeRequestSpinner.bind(this));
+};
+
+// Creates the information required for the application server to be able to send a message to the
+// push service. Returns a promise that will be resolved with said information once available.
+PushGenerator.prototype.createRequest = function() {
   var state = this.computeState(true /* includeDefault */),
       self = this;
 
-  return navigator.serviceWorker.ready.then(function(registration) {
-    return registration.pushManager.getSubscription();
+  // Subscription settings
+  var authentication = this.getField(state, 'authentication', 'public-key');
 
-  }).then(function(subscription) {
-    if (!subscription)
-      throw new Error('You must be subscribed for push messages.');
+  // Message settings
+  var payload = this.getField(state, 'payload', 'text');
+  var padding = parseInt(this.getField(state, 'padding', '0'), 10);
 
-    var settings = {
-      protocol: self.getField(state, 'protocol', 'gcm'),
-      payload: self.getField(state, 'payload', 'none'),
-      encryption: self.getField(state, 'encryption', 'valid')
-    };
+  // Request settings
+  var protocol = this.getField(state, 'protocol', 'web-push');
 
-    if (settings.payload != 'none') {
-      var data = JSON.parse(JSON.stringify(subscription));
-      if (!data.hasOwnProperty('keys') || !data.keys.hasOwnProperty('p256dh') ||
-          !data.keys.hasOwnProperty('auth')) {
-        throw new Error('This implementation requires existence of the P-256 and auth keys ' +
-                        'for adding payloads to a push message.');
-      }
-    }
+  return this.subscriptionGenerator_.getSubscription().then(function(subscription) {
+    return Promise.all([
+      subscription,
+      self.messageGenerator_.createMessage(subscription, payload, padding)
+    ]);
 
-    return self.doCreateMessage(subscription, settings);
+  }).then(function(arguments) {
+    var subscription = arguments[0];
+    var message = arguments[1];
+
+    return self.requestGenerator_.createRequest(subscription, message, protocol, authentication);
   });
 };
 
-PushGenerator.prototype.doCreateMessage = function(subscription, settings) {
-  var self = this;
-
-  return this.doCreatePayload(subscription, settings).then(function(payload) {
-    return {
-      endpoint: self.doCreateEndpoint(subscription, settings),
-      headers: self.doCreateHeaders(payload, subscription, settings),
-      body: self.doCreateBody(payload, subscription, settings)
-    };
-  });
-};
-
-PushGenerator.prototype.doCreatePayload = function(subscription, settings) {
-  if (settings.payload === 'none') {
-    return Promise.resolve({ encryptionHeader: null,
-                             cryptoKeyHeader: null,
-                             payload: null });
-  }
-
-  var payload = 'Hello, world!',
-      paddingBytes = 0;
-
-  switch (settings.payload) {
-    case 'text':
-      // no padding has to be applied
-      break;
-    case 'text_padding':
-      paddingBytes = 128;
-      break;
-    default:
-      payload = settings.payload;
-      break;
-  }
-
-  var promii = [ KeyPair.generate(), KeyPair.import(subscription.getKey('p256dh')) ];
-  return Promise.all(promii).then(function(keys) {
-    var cryptographer = new WebPushCryptographer(keys[0], keys[1], subscription.getKey('auth'));
-    var salt = crypto.getRandomValues(new Uint8Array(16));
-
-    var promii = [ cryptographer.encrypt(salt, payload, paddingBytes), keys[0].exportPublicKey() ];
-    return Promise.all(promii).then(function(data) {
-      return {
-        ciphertext: data[0],
-        salt: toBase64Url(salt),
-        dh: toBase64Url(data[1])
-      };
-    });
-  });
-};
-
-PushGenerator.prototype.doCreateEndpoint = function(subscription, settings) {
-  // TODO: Transform for GCM when protocol != web_push
-  return subscription.endpoint;
-};
-
-PushGenerator.prototype.doCreateHeaders = function(payload, subscription, settings) {
-  if (settings.payload == 'none')
-    return {};  // no payload headers are necessary
-
-  return {
-    'Content-Encoding': 'aesgcm128',
-    'Encryption': 'salt="' + payload.salt + '"',
-    'Crypto-Key': 'dh="' + payload.dh + '"'
-  };
-};
-
-PushGenerator.prototype.doCreateBody = function(payload, subscription, settings) {
-  if (settings.protocol == 'gcm') {
-    // TODO: Create the request body for the GCM protocol.
-    return '';
-  }
-
-  return payload.ciphertext;
-
-//  return String.fromCharCode.apply(null, new Uint8Array(payload.ciphertext));
-};
-
+// Sets the buttons that can be clicked on by the user in order to start a action. Will bind event
+// listeners to each of the actions, mapping to methods in this class.
 PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, display, send, displayMsg) {
   unsubscribe.addEventListener('click', this.__proto__.unsubscribe.bind(this));
   subscribe.addEventListener('click', this.__proto__.subscribe.bind(this));
   display.addEventListener('click', this.__proto__.displaySubscription.bind(this));
   send.addEventListener('click', this.__proto__.sendMessage.bind(this));
   displayMsg.addEventListener('click', this.__proto__.displayMessage.bind(this));
-
 
   this.unsubscribeElement_ = unsubscribe;
   this.subscribeElement_ = subscribe;
@@ -503,6 +431,7 @@ PushGenerator.prototype.setActionElements = function(unsubscribe, subscribe, dis
   this.updateActionState();
 };
 
+// Updates the state of the action buttons in response to a change in push subscription.
 PushGenerator.prototype.updateActionState = function() {
   var result = new Promise(function(resolve, reject) {
     navigator.serviceWorker.ready.then(function(registration) {
@@ -541,6 +470,8 @@ PushGenerator.prototype.updateActionState = function() {
   });
 };
 
+// Adds the need-a-subscription requirement. Will only be validated for sending and displaying
+// messages, but otherwise serves as an informative message to the more savvy user.
 PushGenerator.prototype.addSubscriptionRequirement = function() {
   this.addRequirement(PushGenerator.REQUIREMENT_SUBSCRIPTION,
                       'Requires a valid push messaging subscription.');

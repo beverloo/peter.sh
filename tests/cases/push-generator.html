@@ -18,9 +18,12 @@
             userVisibleOnly: ['userVisibleOnly', GeneratorBase.FIELD_TYPE_BOOL],
 
             // Message settings
-            protocol: ['protocol', GeneratorBase.FIELD_TYPE_STRING],
             payload: ['payload', GeneratorBase.FIELD_TYPE_STRING],
-            encryption: ['encryption', GeneratorBase.FIELD_TYPE_STRING]
+            padding: ['padding', GeneratorBase.FIELD_TYPE_STRING],
+
+            // Request settings
+            protocol: ['protocol', GeneratorBase.FIELD_TYPE_STRING],
+            delay: ['delay', GeneratorBase.FIELD_TYPE_STRING]
           });
 
           generator.setActionElements(
@@ -44,9 +47,9 @@
           <li>
             <label for="authentication">Authentication</label>
             <select id="authentication">
-              <option data-id="1" value="public-key">Application server's public key (webpush-vapid)</option>
-              <option data-id="2" value="sender-id">Proprietary GCM authentication (manifest)</option>
-              <option data-id="3" value="none">None</option>
+              <option data-id="0" value="public-key">Application server's public key (webpush-vapid)</option>
+              <option data-id="1" value="sender-id">Proprietary GCM authentication (manifest)</option>
+              <option data-id="2" value="none">None</option>
             </select>
           </li>
           <li>
@@ -66,7 +69,7 @@
           <button id="action-subscribe">Subscribe</button>
           <button id="action-unsubscribe">Unsubscribe</button> —
           <button id="action-display">Display subscription</button>
-          <img id="spinner" src="/resources/spinner.gif" />
+          <img id="subscription-spinner" src="/resources/spinner.gif" />
         </p>
       </div>
     </section>
@@ -75,37 +78,46 @@
         <h2>Message settings</h2>
         <ol>
           <li>
-            <label for="protocol">Protocol</label>
-            <select id="protocol">
-              <!--<option data-id="0" value="gcm">GCM protocol</option>-->
-              <option data-id="1" value="web_push">Web Push protocol</option>
-            </select>
-          </li>
-          <li>
             <label for="payload">Payload</label>
             <select id="payload">
-              <option data-id="0" value="none">No payload</option>
-              <option data-id="1" value="text">Textual payload</option>
-              <option data-id="2" value="text_padding">Textual payload (w/ padding)</option>
+              <option data-id="0" value="text">Textual payload</option>
+              <option data-id="1" value="empty">Empty payload</option>
+              <option data-id="2" value="none">No payload</option>
               <option data-custom value="custom">Custom</option>
             </select>
             <input id="payload_custom" type="text" />
           </li>
           <li>
-            <label for="encryption">Encryption</label>
-            <select id="encryption">
-              <option data-id="0" value="valid">Valid</option>
-              <!--<option data-id="1" value="invalid_salt">Invalid salt</option>
-              <option data-id="2" value="invalid_public_key">Invalid public key</option>
-              <option data-id="3" value="invalid_payload">Invalid payload (garbage)</option>
-              <option data-id="5" value="invalid_record_size">Invalid payload (record size)</option>-->
+            <label for="padding">Padding</label>
+            <input type="number" id="padding" min="0" max="65535" value="0" />
+          </li>
+        </ol>
+        <!-- TODO: Deliberately break the encryption. -->
+
+        <h2>Request settings</h2>
+        <ol>
+          <li>
+            <label for="protocol">Protocol</label>
+            <select id="protocol">
+              <option data-id="0" value="web-push">Web Push protocol</option>
+              <option data-id="1" value="gcm">GCM protocol</option>
+            </select>
+          </li>
+          <li>
+            <label for="delay">Delay</label>
+            <select id="delay">
+              <option data-id="0" value="0">Immediately</option>
+              <option data-id="1" value="5">Five seconds</option>
+              <option data-id="2" value="60">One minute</option>
             </select>
           </li>
         </ol>
+        <!-- TODO: Deliberately break the headers. -->
 
         <p>
-          <button id="action-send">Send the push message</button>
+          <button id="action-send">Send message</button>
           <button id="action-display-msg">Display message</button>
+          <img id="request-spinner" src="/resources/spinner.gif" />
         </p>
       </div>
       <div id="subscription-info-dialog" class="dialog-content">

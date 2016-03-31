@@ -73,7 +73,7 @@
   box-shadow: 0px 1px 4px #444;
 }
 
-#spinner {
+#subscription-spinner, #request-spinner {
   position: absolute;
   margin: 0 0 0 8px;
   visibility: hidden;
