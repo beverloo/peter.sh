@@ -201,12 +201,17 @@ SubscriptionGenerator.prototype.unsubscribeFromWorker = function() {
   });
 };
 
-
 // -------------------------------------------------------------------------------------------------
 
 function PushGenerator(requirementsElement, element) {
   NotificationGeneratorBase.call(
       this, requirementsElement, element, 'push-generator-sw.js');
+
+  // The generator assumes that the user's browser supports subscription payloads.
+  if (!PushSubscription.prototype.hasOwnProperty('getKey')) {
+    this.addRequirement(PushGenerator.REQUIREMENT_MODERN_BROWSER,
+                        'Requires a browser that supports push messaging payloads.');
+  }
 
   // Class responsible for managing subscriptions with the push service.
   this.subscriptionGenerator_ = new SubscriptionGenerator();
@@ -223,6 +228,8 @@ function PushGenerator(requirementsElement, element) {
 }
 
 PushGenerator.REQUIREMENT_SUBSCRIPTION = 0;
+PushGenerator.REQUIREMENT_MODERN_BROWSER = 1;
+
 
 PushGenerator.MESSAGE_TARGET = '/push-generator/send-message.php';
 
