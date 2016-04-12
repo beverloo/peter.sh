@@ -2,15 +2,18 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
-function toBase64Url(arrayBuffer, start, end) {
+function toBase64(arrayBuffer, start, end) {
   start = start || 0;
   end = end || arrayBuffer.byteLength;
 
   var partialBuffer = new Uint8Array(arrayBuffer.slice(start, end));
-  var base64 = btoa(String.fromCharCode.apply(null, partialBuffer));
-  return base64.replace(/=/g, '')
-               .replace(/\+/g, '-')
-               .replace(/\//g, '_');
+  return btoa(String.fromCharCode.apply(null, partialBuffer))
+}
+
+function toBase64Url(arrayBuffer, start, end) {
+  return toBase64(arrayBuffer, start, end).replace(/=/g, '')
+                                          .replace(/\+/g, '-')
+                                          .replace(/\//g, '_');
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -20,13 +23,19 @@ function SubscriptionGenerator() {}
 // Manifest that contains the 'gcm_sender_id' property for GCM authentication.
 SubscriptionGenerator.MANIFEST_FILE = '/push-generator/push-generator-gcm-manifest.json';
 
-// Public NIST P-256 key in uncompressed format. Must be paired with the private key on the server.
+// Public NIST P-256 key in uncompressed format. Must be paired with the private key.
 SubscriptionGenerator.PUBLIC_KEY = [
   0x04, 0x86, 0x23, 0xC1, 0x85, 0xF0, 0x6C, 0x5D, 0x55, 0x1A, 0xD9, 0x19, 0xAA, 0xE9, 0x02, 0x2F,
   0x43, 0x55, 0xD2, 0x5C, 0x59, 0x86, 0x69, 0x90, 0xAD, 0xF7, 0x2D, 0xD4, 0x22, 0xD8, 0x63, 0xB6,
   0xCD, 0xEF, 0x33, 0xB1, 0xBB, 0x66, 0x2F, 0x47, 0xE5, 0xE6, 0x20, 0xFF, 0x0E, 0x10, 0x7F, 0xCD,
   0xA3, 0x4F, 0x8C, 0x65, 0xF4, 0x64, 0x7E, 0x2C, 0xF3, 0x6B, 0xF8, 0x7C, 0x4B, 0x0C, 0xBD, 0xBF,
   0xFE
+];
+
+// Private NIST P-256 point in raw format. Must be associated with the public key.
+SubscriptionGenerator.PRIVATE_KEY = [
+  0x3C, 0x8F, 0x4B, 0x1E, 0x16, 0x41, 0x69, 0xC8, 0x0F, 0x3F, 0x1C, 0x60, 0xE5, 0xEA, 0x3C, 0xDD,
+  0x72, 0xCC, 0xE6, 0x05, 0x6B, 0x02, 0x40, 0xEE, 0xDF, 0x7B, 0x1D, 0x5C, 0xA8, 0x52, 0x91, 0x81
 ];
 
 // Creates a <link> element having the 'gcm_sender_id' property and adds it to the DOM.
@@ -213,19 +222,175 @@ function MessageGenerator() {}
 // The message will be encrypted following the latest version of the specification:
 // https://tools.ietf.org/html/draft-ietf-webpush-encryption
 MessageGenerator.prototype.createMessage = function(subscription, payload, padding) {
-  return Promise.reject(new Error('Not yet implemented.'));
+  if (!Number.isInteger(padding) || padding < 0 || padding > 65535)
+    return Promise.reject(new Error('The padding must be between 0 and 65535 bytes in length.'));
+
+  return Promise.all([
+    KeyPair.generate(),
+    KeyPair.import(subscription.p256dh, null /* private_key */)
+  ]).then(function(keys) {
+    var serverKeyPair = keys[0];
+    var clientKeyPair = keys[1];
+
+    // 16-byte salt that must be unique to the message.
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+
+    var cryptographer = new WebPushCryptographer(serverKeyPair, clientKeyPair, subscription.auth);
+    return Promise.all([
+      cryptographer.encrypt(salt, payload, padding),
+      serverKeyPair.exportPublicKey()
+    ]).then(function(results) {
+      return {
+        ciphertext: results[0],
+        p256dh: results[1],
+        salt: salt,
+      };
+    });
+  });
 };
 
 // -------------------------------------------------------------------------------------------------
 
 function RequestGenerator() {}
 
+// Prefix to the subscription Id for non-Web Push Protocol subscriptions created by Chrome.
+RequestGenerator.GCM_ENDPOINT_PREFIX = 'https://android.googleapis.com/gcm/send/';
+
+// Private API key associated with the sender Id in the manifest ("627634631355").
+RequestGenerator.GCM_API_KEY = 'AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
+
 // Creates the required information for a request to send |message| to the |subscription|. The
 // |protocol| must be one of { 'web-push', 'gcm' }, and the |authentication| must be one of the
 // following: { 'public-key', 'sender-id', 'none' }. Will return a promise that will be resolved
 // with the request information when the operation has completed.
 RequestGenerator.prototype.createRequest = function(subscription, message, protocol, authentication) {
-  return Promise.reject(new Error('Not yet implemented.'));
+  var encodedPublicKey = toBase64Url(message.p256dh);
+  var encodedSalt = toBase64Url(message.salt);
+
+  // The endpoint may have to be transformed into something else for certain browsers.
+  var endpoint = this.determineSubscriptionEndpoint(subscription.endpoint, protocol);
+
+  // Headers that are to be send with the request.
+  var headers = {
+    'Crypto-Key': 'dh=' + encodedPublicKey,
+    'Encryption': 'salt=' + encodedSalt
+  };
+
+  // Request body that is to be send with the request.
+  var body = '';
+
+  // Depending on the protocol, we either want the request's body to be the binary payload of the
+  // message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
+  switch (protocol) {
+    case 'web-push':
+      headers['Content-Encoding'] = 'aesgcm';
+      body = message.ciphertext; // new TextDecoder('utf-8').decode(message.ciphertext);
+      break;
+    case 'gcm':
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify({
+        'to': this.extractSubscriptionId(subscription.endpoint),
+        'raw_data': toBase64(message.ciphertext)
+      });
+      break;
+    default:
+      return Promise.reject(new Error('Invalid protocol: ' + protocol));
+  }
+
+  var authenticateRequestPromise = Promise.resolve(null /* headers */);
+
+  // The `authentication` value from the subscription settings will influence the authentication
+  // information that will be send to the push service.
+  switch (authentication) {
+    case 'public-key':
+      authenticateRequestPromise = this.createAuthenticationHeader(headers);
+      break;
+    case 'sender-id':
+      headers['Authorization'] = 'key=' + RequestGenerator.GCM_API_KEY;
+      break;
+    case 'none':
+      // No explicit authentication information is to be specified.
+      break;
+    default:
+      return Promise.reject(new Error('Invalid authentication: ' + protocol));
+  }
+
+  // Return once the |authenticateRequestPromise| has resolved, if necessary.
+  return authenticateRequestPromise.then(function(authenticateHeaders) {
+    return {
+      url: endpoint,
+      headers: authenticateHeaders || headers,
+      body: body
+    };
+  });
+};
+
+// Certain versions of Chrome will return an endpoint that has to be manually amended depending on
+// the protocol that's being used. This method implements the required quirks.
+RequestGenerator.prototype.determineSubscriptionEndpoint = function(endpoint, protocol) {
+  if (!endpoint.startsWith(RequestGenerator.GCM_ENDPOINT_PREFIX))
+    return endpoint;
+
+  var subscriptionId = this.extractSubscriptionId(endpoint);
+  switch (protocol) {
+    case 'web-push':
+      return 'https://jmt17.google.com/gcm/demo-webpush-00/' + subscriptionId;
+    case 'gcm':
+      return 'https://android.googleapis.com/gcm/send';  // no subscription Id
+    default:
+      throw new Error('Invalid protocol: ' + protocol);
+  }
+};
+
+// Extracts the subscription Id, proprietary to GCM, from the |endpoint|, and returns the result.
+// This is only meant to be used by non-Web Push Protocol subscriptions created by Chrome.
+RequestGenerator.prototype.extractSubscriptionId = function(endpoint) {
+  if (endpoint.startsWith(RequestGenerator.GCM_ENDPOINT_PREFIX))
+    return endpoint.substr(RequestGenerator.GCM_ENDPOINT_PREFIX.length);
+
+  // Try to guess the start of the subscription Id regardless.
+  return endpoint.substr(endpoint.lastIndexOf('/') + 1);
+};
+
+// Creates the Authorization header field with credentials matching a valid JWT token per the
+// Voluntary Application Server Identification for Web Push specification:
+// https://tools.ietf.org/html/draft-thomson-webpush-vapid
+RequestGenerator.prototype.createAuthenticationHeader = function(headers) {
+  var tokenHeader = {
+    typ: 'JWT',
+    alg: 'ES256'
+  };
+
+  // The `exp` field will contain the current timestamp in UTC plus twelve hours.
+  var tokenBody = {
+    aud: 'https://tests.peter.sh',
+    exp: Math.floor((Date.now() / 1000) + 12 * 60 * 60),
+    sub: 'mailto:peter@lvp-media.com'
+  };
+
+  // Utility function for UTF-8 encoding a string to an ArrayBuffer.
+  var utf8Encode = TextEncoder.prototype.encode.bind(new TextEncoder('utf-8'));
+
+  // The unsigned token is the concatenation of the URL-safe base64 encoded header and body.
+  var unsignedToken = toBase64Url(utf8Encode(JSON.stringify(tokenHeader))) + '.' +
+                      toBase64Url(utf8Encode(JSON.stringify(tokenBody)));
+
+  var alg = { name: 'HMAC', hash: 'SHA-256' };
+
+  // Sign the |unsignedToken| with the server's private key to generate the signature.
+  return crypto.subtle.importKey('raw', new Uint8Array(SubscriptionGenerator.PRIVATE_KEY), alg,
+                                 false /* extractable */, ['sign']).then(function(key) {
+    return crypto.subtle.sign('HMAC', key, utf8Encode(unsignedToken));
+
+  }).then(function(signature) {
+    var jsonWebToken = unsignedToken + '.' + toBase64Url(signature);
+    var p256ecdsa = toBase64Url(new Uint8Array(SubscriptionGenerator.PUBLIC_KEY));
+
+    headers['Authorization'] = 'WebPush ' + jsonWebToken;
+    headers['Crypto-Key'] += '; p256ecdsa=' + p256ecdsa;
+
+    return headers;
+  });
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -259,9 +424,6 @@ function PushGenerator(requirementsElement, element) {
 
 PushGenerator.REQUIREMENT_SUBSCRIPTION = 0;
 PushGenerator.REQUIREMENT_MODERN_BROWSER = 1;
-
-
-PushGenerator.MESSAGE_TARGET = '/push-generator/send-message.php';
 
 PushGenerator.prototype = Object.create(NotificationGeneratorBase.prototype);
 
@@ -353,13 +515,28 @@ PushGenerator.prototype.sendMessage = function() {
     return;
 
   var state = this.computeState(true /* includeDefault */);
-  var delay = this.getField(state, 'delay', '0');
+  var delay = parseInt(this.getField(state, 'delay', '0'), 10);
 
   this.createRequestSpinner();
 
   this.createRequest().then(function(request) {
-    // TODO: Respect the artificial |delay|.
-    // TODO: Send the created message to the push service.
+    return new Promise(function(resolve) {
+      setTimeout(function() { resolve(request); }, delay * 1000);
+    });
+  }).then(function(request) {
+    var headers = new Headers();
+    Object.keys(request.headers).forEach(function(headerName) {
+      headers.append(headerName, request.headers[headerName]);
+    });
+
+    // Proxy everything through a PHP script to get around CORS restrictions.
+    headers.append('X-Endpoint', request.url);
+
+    return fetch('/push.php', {
+      method: 'POST',
+      headers: headers,
+      body: request.body
+    });
 
   }).catch(function(error) {
     alert('Unable to create the message: ' + error);
@@ -375,7 +552,18 @@ PushGenerator.prototype.displayMessage = function() {
   this.createRequestSpinner();
 
   this.createRequest().then(function(request) {
-    // TODO: Display the created message's information.
+    var content = document.getElementById('message-info-dialog').cloneNode(true /* deep */);
+    var headers = [];
+
+    Object.keys(request.headers).forEach(function(headerName) {
+      headers.push(headerName + ': ' + request.headers[headerName]);
+    });
+
+    content.querySelector('#endpoint').textContent = request.url;
+    content.querySelector('#headers').textContent = headers.join('\n');
+    content.querySelector('#body').textContent = request.body;
+
+    return DisplayDialog(content);
 
   }).catch(function(error) {
     alert('Unable to create the message: ' + error);

@@ -78,3 +78,8 @@
   margin: 0 0 0 8px;
   visibility: hidden;
 }
+
+#message-info-dialog > p {
+  font-family: monospace;
+  white-space: pre-wrap;
+}
