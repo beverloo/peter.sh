@@ -18,6 +18,7 @@ function toHeaderName($name) {
 // Determines if the |$endpoint| contains a whitelisted URL.
 function isWhitelisted($endpoint) {
   $endpointWhitelist = [
+    'https://android.googleapis.com/gcm/send',
     'https://jmt17.google.com/gcm/demo-webpush-00/',
     'https://updates.push.services.mozilla.com/push/',
     'https://updates-autopush.stage.mozaws.net',
@@ -35,44 +36,34 @@ function isWhitelisted($endpoint) {
 if ($_SERVER['REQUEST_METHOD'] != 'POST')
   fatalError('405 Method Not Allowed', 'Only POST requests may be made to this tool.');
 
-if (!array_key_exists(toHeaderName('X-Endpoint'), $_SERVER))
+$requestHeaders = apache_request_headers();
+
+if (!array_key_exists('x-endpoint', $requestHeaders))
   fatalError('400 Bad Request', 'The X-Endpoint HTTP header must be set.');
 
-$endpoint = $_SERVER[toHeaderName('X-Endpoint')];
+$endpoint = $requestHeaders['x-endpoint'];
 $headers = [];
 
 if (!isWhitelisted($endpoint))
   fatalError('403 Forbidden', 'The endpoint has not been whitelisted. Send a PR?');
 
-$optionalHeaders = ['Content-Encoding', 'Encryption', 'Crypto-Key'];
+$optionalHeaders = ['Authorization', 'Content-Encoding', 'Content-Type', 'Crypto-Key', 'Encryption'];
+foreach ($optionalHeaders as $headerName) {
+  $lowerCaseHeaderName = strtolower($headerName);
 
-foreach ($optionalHeaders as $header) {
-  $key = toHeaderName($header);
-  if (array_key_exists($key, $_SERVER))
-    $headers[$header] = $_SERVER[$key];
+  if (array_key_exists($lowerCaseHeaderName, $requestHeaders))
+    $headers[] = $headerName . ': ' . $requestHeaders[$lowerCaseHeaderName];
 }
-
-if (strpos($endpoint, 'google') !== false) {
-  $headers['Authorization'] = 'key=AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
-
-  // TODO(peter): Work with the GCM team to fix this.
-  unset($headers['Content-Encoding']);
-}
-
 
 $rawData = file_get_contents('php://input');
 
 // -----------------------------------------------------------------------------
 
 $request = curl_init();
-$requestHeaders = [];
-
-foreach ($headers as $headerName => $headerValue)
-  $requestHeaders[] = $headerName . ': ' . $headerValue;
 
 curl_setopt_array($request, [
   CURLOPT_URL             => $endpoint,
-  CURLOPT_HTTPHEADER      => $requestHeaders,
+  CURLOPT_HTTPHEADER      => $headers,
   CURLOPT_POST            => true,
   CURLOPT_POSTFIELDS      => $rawData,
   CURLOPT_RETURNTRANSFER  => true
