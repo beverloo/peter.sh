@@ -284,7 +284,7 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   switch (protocol) {
     case 'web-push':
       headers['Content-Encoding'] = 'aesgcm';
-      body = message.ciphertext; // new TextDecoder('utf-8').decode(message.ciphertext);
+      body = message.ciphertext;
       break;
     case 'gcm':
       headers['Content-Type'] = 'application/json';
@@ -505,6 +505,9 @@ PushGenerator.prototype.displaySubscription = function() {
     content.querySelector('#auth').textContent = toBase64Url(subscription.auth);
 
     return DisplayDialog(content);
+
+  }).catch(function(error) {
+    alert('Unable to display the subscription: ' + error);
   });
 };
 
