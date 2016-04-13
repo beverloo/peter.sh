@@ -47,7 +47,9 @@ $headers = [];
 if (!isWhitelisted($endpoint))
   fatalError('403 Forbidden', 'The endpoint has not been whitelisted. Send a PR?');
 
-$optionalHeaders = ['Authorization', 'Content-Encoding', 'Content-Type', 'Crypto-Key', 'Encryption'];
+$optionalHeaders = ['Authorization', 'Content-Encoding', 'Content-Type', 'Crypto-Key', 'Encryption',
+                    'TTL'];
+
 foreach ($optionalHeaders as $headerName) {
   $lowerCaseHeaderName = strtolower($headerName);
 
