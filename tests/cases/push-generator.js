@@ -376,12 +376,21 @@ RequestGenerator.prototype.createAuthenticationHeader = function(headers) {
   var unsignedToken = toBase64Url(utf8Encode(JSON.stringify(tokenHeader))) + '.' +
                       toBase64Url(utf8Encode(JSON.stringify(tokenBody)));
 
-  var alg = { name: 'HMAC', hash: 'SHA-256' };
+  // Sign the |unsignedToken| using ES256 (SHA-256 over ECDSA).
+  var publicKey = new Uint8Array(SubscriptionGenerator.PUBLIC_KEY);
+  var key = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: toBase64Url(publicKey.slice(1, 33)),
+    y: toBase64Url(publicKey.slice(33, 65)),
+    d: toBase64Url(new Uint8Array(SubscriptionGenerator.PRIVATE_KEY))
+  };
 
   // Sign the |unsignedToken| with the server's private key to generate the signature.
-  return crypto.subtle.importKey('raw', new Uint8Array(SubscriptionGenerator.PRIVATE_KEY), alg,
-                                 false /* extractable */, ['sign']).then(function(key) {
-    return crypto.subtle.sign('HMAC', key, utf8Encode(unsignedToken));
+  return crypto.subtle.importKey('jwk', key, { name: 'ECDSA', namedCurve: 'P-256' },
+                                 true /* extractable */, ['sign']).then(function(key) {
+    return crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } }, key,
+                              utf8Encode(unsignedToken));
 
   }).then(function(signature) {
     var jsonWebToken = unsignedToken + '.' + toBase64Url(signature);
