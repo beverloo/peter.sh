@@ -273,7 +273,8 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   // Headers that are to be send with the request.
   var headers = {
     'Crypto-Key': 'dh=' + encodedPublicKey,
-    'Encryption': 'salt=' + encodedSalt
+    'Encryption': 'salt=' + encodedSalt,
+    'TTL': '60'
   };
 
   // Request body that is to be send with the request.
@@ -386,7 +387,7 @@ RequestGenerator.prototype.createAuthenticationHeader = function(headers) {
     var jsonWebToken = unsignedToken + '.' + toBase64Url(signature);
     var p256ecdsa = toBase64Url(new Uint8Array(SubscriptionGenerator.PUBLIC_KEY));
 
-    headers['Authorization'] = 'WebPush ' + jsonWebToken;
+    headers['Authorization'] = 'Bearer ' + jsonWebToken;
     headers['Crypto-Key'] += '; p256ecdsa=' + p256ecdsa;
 
     return headers;
