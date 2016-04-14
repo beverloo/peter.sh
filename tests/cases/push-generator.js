@@ -262,8 +262,13 @@ RequestGenerator.GCM_API_KEY = 'AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
 // Creates the required information for a request to send |message| to the |subscription|. The
 // |protocol| must be one of { 'web-push', 'gcm' }, and the |authentication| must be one of the
 // following: { 'public-key', 'sender-id', 'none' }. Will return a promise that will be resolved
-// with the request information when the operation has completed.
-RequestGenerator.prototype.createRequest = function(subscription, message, protocol, authentication) {
+// with the request information when the operation has completed. The |encryption| property
+// indicates whether a deliberate failure should be introduced in the message.
+RequestGenerator.prototype.createRequest = function(subscription, message, protocol, authentication,
+                                                    encryption) {
+  // Apply deliberate failures to the |message|.
+  message = this.amendMessageForEncryptionFailure(encryption, message);
+
   var encodedPublicKey = toBase64Url(message.p256dh);
   var encodedSalt = toBase64Url(message.salt);
 
@@ -320,10 +325,10 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   return authenticateRequestPromise.then(function(authenticateHeaders) {
     return {
       url: endpoint,
-      headers: authenticateHeaders || headers,
+      headers: this.amendHeadersForEncryptionFailure(encryption, authenticateHeaders || headers),
       body: body
     };
-  });
+  }.bind(this));
 };
 
 // Certain versions of Chrome will return an endpoint that has to be manually amended depending on
@@ -401,6 +406,95 @@ RequestGenerator.prototype.createAuthenticationHeader = function(headers) {
 
     return headers;
   });
+};
+
+// Amends the contents of the |message| to create deliberate failures depending on the value of
+// |encryption|. Will throw an error if the |encryption| option is not recognized.
+RequestGenerator.prototype.amendMessageForEncryptionFailure = function(encryption, message) {
+  switch (encryption) {
+    case 'valid':
+      // Nothing to do, the encryption is meant to be valid.
+      break;
+    case 'content-encoding-missing':
+    case 'content-encoding-invalid':
+    case 'crypto-key-missing':
+    case 'encryption-missing':
+    case 'encryption-invalid-rs':
+      // These cases are handled in amendHeadersForEncryptionFailure().
+      break;
+    case 'crypto-key-invalid':
+      // Change five bytes in the public key to random uint8 values. There is a probability of
+      // 9e-13 of this not breaking the key, but we can live with that.
+      message.p256dh[13] = Math.floor(Math.random() * 255);
+      message.p256dh[25] = Math.floor(Math.random() * 255);
+      message.p256dh[32] = Math.floor(Math.random() * 255);
+      message.p256dh[41] = Math.floor(Math.random() * 255);
+      message.p256dh[52] = Math.floor(Math.random() * 255);
+      break;
+    case 'encryption-invalid-salt-length':
+      // Change the message's salt to be 15 characters long rather than 16.
+      message.salt = message.salt.slice(1);
+      break;
+    case 'encryption-invalid-salt-value':
+      // Change the message's salt to another 16-byte cryptographically secure random value.
+      message.salt = crypto.getRandomValues(new Uint8Array(16));
+      break;
+    case 'aesgcm-invalid':
+      // Changes two bytes of the AES-GCM authentication tag to random values.
+      var ciphertext = new Uint8Array(message.ciphertext);
+      ciphertext[ciphertext.length - 1] = Math.floor(Math.random() * 255);
+      ciphertext[ciphertext.length - 4] = Math.floor(Math.random() * 255);
+
+      message.ciphertext = ciphertext.buffer;
+      break;
+    default:
+      throw new Error('Invalid encryption value: ' + encryption);
+  }
+
+  return message;
+};
+
+// Amends the array of |headers| to create deliberate create encryption failures depending on the
+// value of |encryption|. Will throw an error if the |encryption| option is not recognized.
+RequestGenerator.prototype.amendHeadersForEncryptionFailure = function(encryption, headers) {
+  switch (encryption) {
+    case 'valid':
+      // Nothing to do, the encryption is meant to be valid.
+      break;
+    case 'crypto-key-invalid':
+    case 'encryption-invalid-salt-length':
+    case 'encryption-invalid-salt-value':
+    case 'aesgcm-invalid':
+      // These cases are handled in amendMessageForEncryptionFailure().
+      break;
+    case 'content-encoding-missing':
+      // Remove the Content-Encoding header from the message altogether.
+      delete headers['Content-Encoding'];
+      break;
+    case 'content-encoding-invalid':
+      // Give the Content-Encoding header a value of `aesgcm1337`, which is different from the
+      // value of `aesgcm` that is should be according to draft-ietf-webpush-encryption.
+      headers['Content-Encoding'] = 'aesgcm1337';
+      break;
+    case 'crypto-key-missing':
+      // Remove the Crypto-Key header from the message altogether.
+      delete headers['Crypto-Key'];
+      break;
+    case 'encryption-missing':
+      // Remove the Encryption header from the message altogether.
+      delete headers['Encryption'];
+      break;
+    case 'encryption-invalid-rs':
+      // Append an explicit record size value to the Encryption header with a value of zero, which
+      // is invalid per draft-ietf-http-encryption.
+      if (headers.hasOwnProperty('Encryption'))
+        headers['Encryption'] += '; rs=0';
+      break;
+    default:
+      throw new Error('Invalid encryption value: ' + encryption);
+  }
+
+  return headers;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -596,6 +690,7 @@ PushGenerator.prototype.createRequest = function() {
   // Message settings
   var payload = this.getField(state, 'payload', 'text');
   var padding = parseInt(this.getField(state, 'padding', '0'), 10);
+  var encryption = this.getField(state, 'encryption', 'valid');
 
   // Request settings
   var protocol = this.getField(state, 'protocol', 'web-push');
@@ -610,7 +705,8 @@ PushGenerator.prototype.createRequest = function() {
     var subscription = arguments[0];
     var message = arguments[1];
 
-    return self.requestGenerator_.createRequest(subscription, message, protocol, authentication);
+    return self.requestGenerator_.createRequest(
+        subscription, message, protocol, authentication, encryption);
   });
 };
 
