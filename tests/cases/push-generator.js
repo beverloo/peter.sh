@@ -592,6 +592,8 @@ PushGenerator.prototype.unsubscribe = function() {
 
   this.subscriptionGenerator_.unsubscribe(source).then(function() {
     self.updateActionState();
+    document.location.hash =
+        self.serialize(self.computeState(false /* includeDefault */));
 
   }).catch(function(error) {
     alert('Unable to unsubscribe: ' + error);
@@ -601,12 +603,17 @@ PushGenerator.prototype.unsubscribe = function() {
 
 // Displays a dialog box with information about the subscription available to the user.
 PushGenerator.prototype.displaySubscription = function() {
+  var self = this;
+
   return this.subscriptionGenerator_.getSubscription().then(function(subscription) {
     var content = document.getElementById('subscription-info-dialog').cloneNode(true /* deep */);
 
     content.querySelector('#endpoint').textContent = subscription.endpoint;
     content.querySelector('#p256dh').textContent = toBase64Url(subscription.p256dh);
     content.querySelector('#auth').textContent = toBase64Url(subscription.auth);
+
+    document.location.hash =
+        self.serialize(self.computeState(false /* includeDefault */));
 
     return DisplayDialog(content);
 
@@ -621,12 +628,16 @@ PushGenerator.prototype.sendMessage = function() {
   if (!this.verifyRequirements())
     return;
 
+  var self = this;
   var state = this.computeState(true /* includeDefault */);
   var delay = parseInt(this.getField(state, 'delay', '0'), 10);
 
   this.createRequestSpinner();
 
   this.createRequest().then(function(request) {
+    document.location.hash =
+        self.serialize(self.computeState(false /* includeDefault */));
+
     return new Promise(function(resolve) {
       setTimeout(function() { resolve(request); }, delay * 1000);
     });
@@ -656,6 +667,8 @@ PushGenerator.prototype.displayMessage = function() {
   if (!this.verifyRequirements())
     return;
 
+  var self = this;
+
   this.createRequestSpinner();
 
   this.createRequest().then(function(request) {
@@ -669,6 +682,9 @@ PushGenerator.prototype.displayMessage = function() {
     content.querySelector('#endpoint').textContent = request.url;
     content.querySelector('#headers').textContent = headers.join('\n');
     content.querySelector('#body').textContent = request.body;
+
+    document.location.hash =
+        self.serialize(self.computeState(false /* includeDefault */));
 
     return DisplayDialog(content);
 
