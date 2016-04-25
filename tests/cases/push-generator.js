@@ -309,7 +309,7 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   // information that will be send to the push service.
   switch (authentication) {
     case 'public-key':
-      authenticateRequestPromise = this.createAuthenticationHeader(headers);
+      authenticateRequestPromise = this.createAuthenticationHeader(endpoint, headers);
       break;
     case 'sender-id':
       headers['Authorization'] = 'key=' + RequestGenerator.GCM_API_KEY;
@@ -361,7 +361,7 @@ RequestGenerator.prototype.extractSubscriptionId = function(endpoint) {
 // Creates the Authorization header field with credentials matching a valid JWT token per the
 // Voluntary Application Server Identification for Web Push specification:
 // https://tools.ietf.org/html/draft-thomson-webpush-vapid
-RequestGenerator.prototype.createAuthenticationHeader = function(headers) {
+RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, headers) {
   var tokenHeader = {
     typ: 'JWT',
     alg: 'ES256'
@@ -369,7 +369,7 @@ RequestGenerator.prototype.createAuthenticationHeader = function(headers) {
 
   // The `exp` field will contain the current timestamp in UTC plus twelve hours.
   var tokenBody = {
-    aud: 'https://tests.peter.sh',
+    aud: new URL(endpoint).origin,
     exp: Math.floor((Date.now() / 1000) + 12 * 60 * 60),
     sub: 'mailto:peter@lvp-media.com'
   };
