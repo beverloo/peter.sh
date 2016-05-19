@@ -36,7 +36,7 @@ function isWhitelisted($endpoint) {
 if ($_SERVER['REQUEST_METHOD'] != 'POST')
   fatalError('405 Method Not Allowed', 'Only POST requests may be made to this tool.');
 
-$requestHeaders = apache_request_headers();
+$requestHeaders = array_change_key_case(apache_request_headers(), CASE_LOWER);
 
 if (!array_key_exists('x-endpoint', $requestHeaders))
   fatalError('400 Bad Request', 'The X-Endpoint HTTP header must be set.');
