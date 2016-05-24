@@ -19,6 +19,7 @@ function toHeaderName($name) {
 function isWhitelisted($endpoint) {
   $endpointWhitelist = [
     'https://android.googleapis.com/gcm/send',
+    'https://fcm.googleapis.com/',
     'https://jmt17.google.com/gcm/demo-webpush-00/',
     'https://updates.push.services.mozilla.com/push/',
     'https://updates-autopush.stage.mozaws.net',
