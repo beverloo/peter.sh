@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Notification `actions` and `vibrate` property exposure.</title>
+  </head>
+  <body>
+    <p>
+      This page indicates whether the `actions` and `vibrate` properties are exposed on the Notification prototype.
+    </p>
+    <ul>
+      <li><b>Notification.actions</b>: <span id="actions">Unknown</span></li>
+      <li><b>Notification.vibrate</b>: <span id="vibrate">Unknown</span></li>
+    </ul>
+    <script>
+      var actions = document.getElementById('actions');
+      var vibrate = document.getElementById('vibrate');
+
+      actions.textContent = ('actions' in Notification.prototype) ? 'Supported' : 'Not supported';
+      vibrate.textContent = ('vibrate' in Notification.prototype) ? 'Supported' : 'Not supported'; 
+    </script>
+  </body>
+</html>
