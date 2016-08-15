@@ -25,6 +25,20 @@ if (!String.prototype.hasOwnProperty('padRight')) {
   }
 }
 
+if (!Uint8Array.prototype.hasOwnProperty('slice')) {
+    Uint8Array.prototype.slice = Uint8Array.prototype.subarray;
+}
+
+if (!Uint8Array.prototype.hasOwnProperty('fill')) {
+    Uint8Array.prototype.fill = function(value, start, end) {
+        if (start === undefined) start = 0;
+        if (end === undefined) end = this.length;
+        for (var i = start; i < end; ++i) {
+            this[i] = value;
+        }
+    }
+}
+
 // Returns the value of |element|.
 function getElementValue(element) {
   switch (element.tagName) {
