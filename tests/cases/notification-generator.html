@@ -20,6 +20,7 @@
             title: ['title', GeneratorBase.FIELD_TYPE_STRING],
             body: ['body', GeneratorBase.FIELD_TYPE_STRING],
             dir: ['direction', GeneratorBase.FIELD_TYPE_STRING],
+            image: ['image', GeneratorBase.FIELD_TYPE_STRING],
             icon: ['icon', GeneratorBase.FIELD_TYPE_STRING],
             badge: ['badge', GeneratorBase.FIELD_TYPE_STRING],
 
@@ -113,6 +114,15 @@
               <option data-id="1" value="rtl">Right-to-left</option>
               <option data-id="2" value="auto">Auto</option>
             </select>
+          </li>
+          <li>
+            <label for="image" not-implemented title="Not yet standardized. Proposed at https://github.com/whatwg/notifications/issues/79">Image</label>
+            <select id="image">
+              <option data-id="0" value="">No image</option>
+              <option data-id="1" value="/resources/large-cat.jpg">Cat photo (JPEG, 3072x1728)</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="image_custom" type="text" />
           </li>
           <li>
             <label for="icon">Icon</label>
