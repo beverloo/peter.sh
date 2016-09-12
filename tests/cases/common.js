@@ -303,6 +303,7 @@ GeneratorBase.prototype.getField = function(state, name, defaultValue) {
           actions = [];
 
       for (var index = 0; index < buttons.length; ++index) {
+        // Retrieve title and potentially icon and type from buttons[index].
         var values = buttons[index].split(GeneratorBase.SEPARATOR_MULTI_VALUE);
         var action = {
           action: index,
@@ -310,6 +311,8 @@ GeneratorBase.prototype.getField = function(state, name, defaultValue) {
         };
         if (values.length > 1)
           action.icon = values[1];
+        if (values.length > 2)
+          action.type = values[2];
         actions.push(action);
       }
 
