@@ -191,7 +191,7 @@
           <li>
             <label for="actions" not-implemented title="Not implemented by Firefox.">Actions</label>
             <select id="actions">
-              <!-- values will be interpreted as "button1Title$$button1Icon$$button1Type;;button2Title$$button2Icon;;button3Title" -->
+              <!-- values will be interpreted as "button1Title$$button1Icon$$button1Type$$button1placeholder;;button2Title$$button2Icon;;button3Title" etc. -->
               <option data-id="0" value="">No actions</option>
               <option data-id="1" value="I am a button!$$/resources/icons/11.png">One action (LTR)</option>
               <option data-id="2" value="טקסט קצר$$/resources/icons/11.png">One action (RTL)</option>
@@ -205,6 +205,7 @@
               <option data-id="9" value="No icon">One action (no icon)</option>
               <option data-id="10" value="$$/resources/icons/11.png">One action (empty title)</option>
               <option data-id="11" value="Reply$$/resources/icons/11.png$$text">One action (type text)</option>
+              <option data-id="12" value="Reply$$/resources/icons/11.png$$text$$Placeholder">One action (type text with placeholder)</option>
             </select>
           </li>
           <li>
