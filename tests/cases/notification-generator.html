@@ -25,6 +25,7 @@
             badge: ['badge', GeneratorBase.FIELD_TYPE_STRING],
 
             // Behavioral settings
+            persistent: ['persistent', GeneratorBase.FIELD_TYPE_BOOL],
             tag: ['tag', GeneratorBase.FIELD_TYPE_STRING],
             vibrate: ['vibrate', GeneratorBase.FIELD_TYPE_ARRAY],
             timestamp: ['timestamp',
@@ -152,6 +153,10 @@
 
         <h2>Behavioral settings</h2>
         <ol>
+          <li>
+            <label for="persistent">Persistent</label>
+            <input type="checkbox" checked id="persistent" />
+          </li>
           <li>
             <label for="tag">Tag</label>
             <select id="tag">

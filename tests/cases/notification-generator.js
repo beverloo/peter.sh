@@ -29,6 +29,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     actions: this.getField(state, 'actions', undefined),
     silent: this.getField(state, 'silent', false),
     // noscreen
+    persistent: this.getField(state, 'persistent', true),
     requireInteraction: this.getField(state, 'requireInteraction', false),
     sticky: this.getField(state, 'sticky', false),
     notificationCloseEvent: this.getField(state, 'notificationCloseEvent', false),
@@ -58,7 +59,7 @@ NotificationGenerator.prototype.display = function() {
 
   var title = state.title.value,
       options = this.createNotificationOptions(state),
-      persistent = true;
+      persistent = state.persistent.value;
 
   var promise = persistent ? this.displayPersistent(title, options)
                            : this.displayNonPersistent(title, options);
@@ -73,7 +74,7 @@ NotificationGenerator.prototype.display = function() {
 // Displays a persistent notification on the active Service Worker registration,
 // and returns a Promise that will be settled when the operation is complete.
 NotificationGenerator.prototype.displayPersistent = function(title, options) {
-  return navigator.serviceWorker.ready.then(function(serviceWorker) {
+    return navigator.serviceWorker.ready.then(function(serviceWorker) {
     return serviceWorker.showNotification(title, options);
 
   }).catch(function(exception) { alert(exception); });
@@ -82,7 +83,7 @@ NotificationGenerator.prototype.displayPersistent = function(title, options) {
 // Displays a non-persistent notification using the Notification constructor,
 // and returns a Promise that will be settled when the operation is complete.
 NotificationGenerator.prototype.displayNonPersistent = function(title, options) {
-  return new Promise(function(resolve) {
+    return new Promise(function(resolve) {
     var notification = null;
     try {
       notification = new Notification(title, options);
@@ -91,6 +92,30 @@ NotificationGenerator.prototype.displayNonPersistent = function(title, options) 
       return resolve();
     }
 
+    notification.addEventListener('click', function () {
+      var action = options.data.options.action;
+      if (action == 'message') {
+        var message = 'Clicked on "' + notification.title + '"';
+        alert(message);
+      }
+      else if (action == 'default' || action == 'focus-only') {
+            // Focusing is the default option.
+      }
+      else {
+        alert("action not supported " + action);
+      }
+
+      if (options.data.options.close) {
+          notification.close();
+      }
+    });
+
+    notification.addEventListener('close', function() {
+      if (options.data.options.notificationCloseEvent) {
+        var message = 'Closed "' + notification.title + '"';
+        alert(message);
+      }
+    });
     notification.addEventListener('show', function() {
       resolve();
     });
