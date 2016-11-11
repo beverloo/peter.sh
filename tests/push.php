@@ -21,6 +21,7 @@ function isWhitelisted($endpoint) {
     'https://android.googleapis.com/gcm/send',
     'https://fcm.googleapis.com/',
     'https://jmt17.google.com/',
+    'https://updates.push.services.mozilla.com/wpush/v2/',
     'https://updates.push.services.mozilla.com/push/',
     'https://updates-autopush.stage.mozaws.net',
   ];
