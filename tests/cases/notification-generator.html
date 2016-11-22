@@ -55,6 +55,12 @@
             });
           });
 
+          // Defines the behavior of the get displayed button.
+          var getDisplayedButton = document.getElementById('action-get-displayed');
+          getDisplayedButton.addEventListener('click', function() {
+              generator.getPersistent();
+          });
+
           // The reset button allows the form to be reset to its initial values,
           // which is implemented by refreshing the page.
           var resetButton = document.getElementById('action-reset');
@@ -252,5 +258,6 @@
         <p>
           <button id="action-reset">Reset</button>
           <button id="action-display">Display the notification</button>
+          <button id="action-get-displayed">Get displayed notifications</button>
         </p>
       </div>
