@@ -126,3 +126,18 @@ NotificationGenerator.prototype.displayNonPersistent = function(title, options) 
     });
   });
 };
+
+NotificationGenerator.prototype.getPersistent = function() {
+  return navigator.serviceWorker.ready.then(function(serviceWorker) {
+      return serviceWorker.getNotifications().then(function(notifications) {
+          var notificationResult = '';
+          for (var i = 0; i < notifications.length; ++i) {
+              notificationResult = notificationResult.concat(notifications[i].title);
+              if (i < (notifications.length -1))
+                  notificationResult = notificationResult.concat(',');
+          }
+          alert(notificationResult);
+      });
+
+  }).catch(function(exception) { alert(exception); });
+};
