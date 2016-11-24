@@ -149,11 +149,11 @@ class RepositoryTracker extends Service {
     // independent Twitter feeds and developers.
     private function didStoreCommit($project_id, $revision_sha, $revision_date, $message) {
         // TODO(Peter): Make this more generic if there's sufficient benefit.
-        $triggers = array('DevTools', 'Dev Tools');
+        $triggers = array('DevTools', 'Dev Tools', '[inspector]');
 
         $relevant = false;
         foreach ($triggers as $trigger) {
-            if (strpos($message, $trigger) !== false)
+            if (stripos($message, $trigger) !== false)
                 $relevant = true;
         }
 
