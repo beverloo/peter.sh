@@ -334,6 +334,9 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
 // Certain versions of Chrome will return an endpoint that has to be manually amended depending on
 // the protocol that's being used. This method implements the required quirks.
 RequestGenerator.prototype.determineSubscriptionEndpoint = function(endpoint, protocol) {
+  if (window.endpointOverride)
+    return window.endpointOverride;
+
   if (!endpoint.startsWith(RequestGenerator.GCM_ENDPOINT_PREFIX))
     return endpoint;
 
