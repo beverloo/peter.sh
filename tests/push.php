@@ -3,6 +3,20 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
+// List of endpoints that can be used by the Push Generator. Please send a PR
+// on GitHub (beverloo/peter.sh) if yours isn't listed.
+$endpointWhitelist = [
+  'https://android.googleapis.com/gcm/send',
+  'https://fcm.googleapis.com/',
+  'https://jmt17.google.com/',
+  'https://updates.push.services.mozilla.com/wpush/v2/',
+  'https://updates.push.services.mozilla.com/push/',
+  'https://updates-autopush.stage.mozaws.net',
+];
+
+if (file_exists(__DIR__ . '/push.private.php'))
+  require_once __DIR__ . '/push.private.php';
+
 // Responds with HTTP |$status| and outputs |$message| for additional info.
 function fatalError($status, $message) {
   Header('HTTP/1.0 ' . $status); 
@@ -17,17 +31,11 @@ function toHeaderName($name) {
 
 // Determines if the |$endpoint| contains a whitelisted URL.
 function isWhitelisted($endpoint) {
-  $endpointWhitelist = [
-    'https://android.googleapis.com/gcm/send',
-    'https://fcm.googleapis.com/',
-    'https://jmt17.google.com/',
-    'https://updates.push.services.mozilla.com/wpush/v2/',
-    'https://updates.push.services.mozilla.com/push/',
-    'https://updates-autopush.stage.mozaws.net',
-  ];
+  global $endpointWhitelist;
 
   $filtered = array_filter($endpointWhitelist, function($entry) use ($endpoint) {
-    return substr($endpoint, 0, strlen($entry)) == $entry;
+    return substr($endpoint, 0, strlen($entry)) == $entry ||
+           strpos($endpoint, $entry) !== false;
   });
 
   return !!count($filtered);
