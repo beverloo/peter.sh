@@ -62,9 +62,15 @@ $optionalHeaders = ['Authorization', 'Content-Encoding', 'Content-Type', 'Crypto
 
 foreach ($optionalHeaders as $headerName) {
   $lowerCaseHeaderName = strtolower($headerName);
+  
+  if (!array_key_exists($lowerCaseHeaderName, $requestHeaders))
+    continue;
+  
+  $value = $requestHeaders[$lowerCaseHeaderName];
+  if ($lowerCaseHeaderName == 'content-type' && $value == 'application/octet-stream')
+    continue;
 
-  if (array_key_exists($lowerCaseHeaderName, $requestHeaders))
-    $headers[] = $headerName . ': ' . $requestHeaders[$lowerCaseHeaderName];
+  $headers[] = $headerName . ': ' . $value;
 }
 
 $rawData = file_get_contents('php://input');
