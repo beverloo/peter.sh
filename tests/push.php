@@ -67,7 +67,7 @@ foreach ($optionalHeaders as $headerName) {
     continue;
   
   $value = $requestHeaders[$lowerCaseHeaderName];
-  if ($lowerCaseHeaderName == 'content-type' && $value == 'application/octet-stream')
+  if ($lowerCaseHeaderName == 'content-type' && $value != 'application/json')
     continue;
 
   $headers[] = $headerName . ': ' . $value;
