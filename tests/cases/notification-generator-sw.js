@@ -16,6 +16,9 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(clients.claim());
 });
 
+// Marks the website as being installable in Chrome.
+self.addEventListener('fetch', function(event) {});
+
 self.addEventListener('notificationclick', function(event) {
   var notification = event.notification;
 
