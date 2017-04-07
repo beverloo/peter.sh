@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Downloading Background Fetch content</title>
+    <style>
+      body { font-family: Arial; font-size: 12px; }
+      li { margin-bottom: 2em; }
+      h1 { font-size: 1.4em; margin: 0px; }
+      h2 { font-size: 1em; margin: 0px; font-weight: normal; }
+      span { color: red; font-style: italic; }
+
+      textarea {
+        width: 500px;
+        height: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="button" id="start-fetch" value="Start a background fetch..." disabled />
+    <ol id="result-list"></ol>
+    <script>
+      var startButton = document.getElementById('start-fetch');
+      navigator.serviceWorker.register('background-fetch-content-sw.js', { scope: location.pathname })
+        .then(registration => navigator.serviceWorker.ready)
+        .then(registration => {
+          startButton.addEventListener('click', () => {
+            var tag = 'my-fetch';
+            var requests = [
+              '/resources/icons/15.jpg',  // cat
+              '/resources/random-cat-joke.php',  // text
+            ];
+            var options = {};
+
+            registration.backgroundFetch.fetch(tag, requests, options)
+              .then(backgroundFetchRegistration => {
+                console.log('Registered the Background Fetch', backgroundFetchRegistration);
+              });
+          });
+
+          startButton.disabled = false;
+        });
+
+      var resultList = document.getElementById('result-list');
+      navigator.serviceWorker.addEventListener('message', event => {
+        resultList.innerHTML = '';  // clear previous results
+        event.data.forEach(result => {
+          var listItem = document.createElement('li'),
+              resourceName = document.createElement('h1'),
+              resourceStatus = document.createElement('h2'),
+              resourceHeaders = document.createElement('pre');
+
+          resourceName.textContent = result.url;
+          resourceStatus.textContent =
+              'Status: ' + result.status + ' ('  + result.statusText + '), ' +
+              'ok: ' + (result.ok ? 'true' : 'false') + ', ' +
+              'redirected: ' + (result.redirected ? 'true' : 'false') + ', ' +
+              'type: ' + result.type;
+
+          for (var key in result.headers)
+            resourceHeaders.textContent += key + ': ' + result.headers[key] + '\n';
+
+          listItem.appendChild(resourceName);
+          listItem.appendChild(resourceStatus);
+          listItem.appendChild(resourceHeaders);
+
+          var resourceView = null;
+          if (!result.data) {
+            resourceView = document.createElement('span');
+            resourceView.textContent = 'No response data could be read.';
+
+          } else if (result.url.endsWith('jpg')) {
+            resourceView = document.createElement('img');
+            resourceView.src = 'data:image/jpg;base64,' + result.data;
+
+          } else {
+            resourceView = document.createElement('textarea');
+            resourceView.value = atob(result.data);
+          }
+
+          listItem.appendChild(resourceView);
+
+          resultList.appendChild(listItem);
+        });
+      });
+    </script>
+  </body>
+</html>
