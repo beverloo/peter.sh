@@ -31,7 +31,7 @@ self.addEventListener('backgroundfetched', function(event) {
 
       // Try clone the |response| and read it as a stream. Not required, but
       // Paul tells me this is required for him to enjoy cat jokes.
-      {
+      if (response.body) {
         var clone = response.clone();
         var reader = clone.body.getReader();
         var byteCount = 0;
@@ -53,7 +53,14 @@ self.addEventListener('backgroundfetched', function(event) {
 
       response.arrayBuffer().then(buffer => {
         console.log('Read ' + buffer.byteLength + ' bytes for ' + response.url);
-        result.data = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
+        var uint8Buffer = new Uint8Array(buffer),
+            uint8Data = '';
+
+        for (var i = 0; i < buffer.byteLength; ++i)
+          uint8Data += String.fromCharCode(uint8Buffer[i]);
+
+        result.data = btoa(uint8Data);
         resolve(result);
 
       }, error => {
