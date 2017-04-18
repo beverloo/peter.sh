@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Simple non-persistent notification display</title>
+  </head>
+  <body>
+    <p>
+      Accept permission and witness a notification being shown. Refresh the page
+      to see it again. It should not replace the old notification.
+    </p>
+    <script>
+      Notification.requestPermission(function(permission) {
+        if (permission != 'granted')
+          return;
+
+        new Notification('Hello world!', {
+          body: 'This is the notification text.',
+          icon: '/resources/icons/1.png'
+        });
+      });
+    </script>
+  </body>
+</html>
