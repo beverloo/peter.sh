@@ -221,7 +221,7 @@ function MessageGenerator() {}
 //
 // The message will be encrypted following the latest version of the specification:
 // https://tools.ietf.org/html/draft-ietf-webpush-encryption
-MessageGenerator.prototype.createMessage = function(subscription, payload, padding) {
+MessageGenerator.prototype.createMessage = function(subscription, payload, padding, encryption) {
   if (!Number.isInteger(padding) || padding < 0 || padding > 65535)
     return Promise.reject(new Error('The padding must be between 0 and 65535 bytes in length.'));
 
@@ -235,7 +235,29 @@ MessageGenerator.prototype.createMessage = function(subscription, payload, paddi
     // 16-byte salt that must be unique to the message.
     var salt = crypto.getRandomValues(new Uint8Array(16));
 
-    var cryptographer = new WebPushCryptographer(serverKeyPair, clientKeyPair, subscription.auth);
+    var cryptographer;
+    switch (encryption) {
+      case 'valid-03':
+      case 'content-encoding-missing':
+      case 'content-encoding-invalid':
+      case 'crypto-key-missing':
+      case 'encryption-missing':
+      case 'encryption-invalid-rs':
+      case 'crypto-key-invalid':
+      case 'encryption-invalid-salt-length':
+      case 'encryption-invalid-salt-value':
+      case 'aesgcm-invalid':
+        cryptographer = new WebPushCryptographerDraft03(
+            serverKeyPair, clientKeyPair, subscription.auth);
+        break;
+      case 'valid-08':
+        cryptographer = new WebPushCryptographerDraft08(
+            serverKeyPair, clientKeyPair, subscription.auth);
+        break;
+      default:
+        throw new Error('Invalid encryption value: ' + encryption);
+    }
+
     return Promise.all([
       cryptographer.encrypt(salt, payload, padding),
       serverKeyPair.exportPublicKey()
@@ -269,38 +291,94 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   // Apply deliberate failures to the |message|.
   message = this.amendMessageForEncryptionFailure(encryption, message);
 
-  var encodedPublicKey = toBase64Url(message.p256dh);
-  var encodedSalt = toBase64Url(message.salt);
-
   // The endpoint may have to be transformed into something else for certain browsers.
   var endpoint = this.determineSubscriptionEndpoint(subscription.endpoint, protocol);
 
-  // Headers that are to be send with the request.
+  // The headers that are to be send with the request.
   var headers = {
-    'Crypto-Key': 'dh=' + encodedPublicKey,
-    'Encryption': 'salt=' + encodedSalt,
-    'TTL': '60'
+    'TTL': '60',
   };
 
   // Request body that is to be send with the request.
   var body = '';
 
-  // Depending on the protocol, we either want the request's body to be the binary payload of the
-  // message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
-  switch (protocol) {
-    case 'web-push':
-      headers['Content-Encoding'] = 'aesgcm';
-      body = message.ciphertext;
+  switch (encryption) {
+    case 'valid-03':
+    case 'content-encoding-missing':
+    case 'content-encoding-invalid':
+    case 'crypto-key-missing':
+    case 'encryption-missing':
+    case 'encryption-invalid-rs':
+    case 'crypto-key-invalid':
+    case 'encryption-invalid-salt-length':
+    case 'encryption-invalid-salt-value':
+    case 'aesgcm-invalid':
+      var encodedPublicKey = toBase64Url(message.p256dh);
+      var encodedSalt = toBase64Url(message.salt);
+
+      headers['Crypto-Key'] = 'dh=' + encodedPublicKey;
+      headers['Encryption'] = 'salt=' + encodedSalt;
+
+      // Depending on the protocol, we either want the request's body to be the binary payload of the
+      // message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
+      switch (protocol) {
+        case 'web-push':
+          headers['Content-Encoding'] = 'aesgcm';
+          body = message.ciphertext;
+          break;
+        case 'gcm':
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify({
+            'to': this.extractSubscriptionId(subscription.endpoint),
+            'raw_data': toBase64(message.ciphertext)
+          });
+          break;
+        default:
+          return Promise.reject(new Error('Invalid protocol: ' + protocol));
+      }
       break;
-    case 'gcm':
-      headers['Content-Type'] = 'application/json';
-      body = JSON.stringify({
-        'to': this.extractSubscriptionId(subscription.endpoint),
-        'raw_data': toBase64(message.ciphertext)
-      });
+    case 'valid-08':
+      // The message will feature a binary header that contains the message's salt and the sender's
+      // public key. No headers will be used anymore for this purpose.
+      var messageHeader = new Uint8Array(16 + 4 + 1 + 65 + message.ciphertext.byteLength);
+      var offset = 0;
+
+      messageHeader.set(message.salt, offset);
+      offset += message.salt.byteLength;
+
+      messageHeader.set([ 0x00, 0x00, 0x10, 0x00 ], offset);  // 0x1000 = 4096
+      offset += 4;
+
+      messageHeader.set([ 0x41 ], offset);  // 0x41 = 65
+      offset += 1;
+
+      messageHeader.set(message.p256dh, offset);
+      offset += message.p256dh.byteLength;
+
+      messageHeader.set(new Uint8Array(message.ciphertext), offset);
+
+      // Always set the Content-Encoding header to `aes128gcm`.
+      headers['Content-Encoding'] = 'aes128gcm';
+
+      // Depending on the protocol, we either want the request's body to be the binary payload of the
+      // message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
+      switch (protocol) {
+        case 'web-push':
+          body = messageHeader;
+          break;
+        case 'gcm':
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify({
+            'to': this.extractSubscriptionId(subscription.endpoint),
+            'raw_data': toBase64(messageHeader)
+          });
+          break;
+        default:
+          return Promise.reject(new Error('Invalid protocol: ' + protocol));
+      }
       break;
     default:
-      return Promise.reject(new Error('Invalid protocol: ' + protocol));
+      throw new Error('Invalid encryption value: ' + encryption);
   }
 
   var authenticateRequestPromise = Promise.resolve(null /* headers */);
@@ -405,7 +483,10 @@ RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, heade
     var p256ecdsa = toBase64Url(new Uint8Array(SubscriptionGenerator.PUBLIC_KEY));
 
     headers['Authorization'] = 'Bearer ' + jsonWebToken;
-    headers['Crypto-Key'] += '; p256ecdsa=' + p256ecdsa;
+    if (headers.hasOwnProperty('Crypto-Key'))
+      headers['Crypto-Key'] += '; p256ecdsa=' + p256ecdsa;
+    else
+      headers['Crypto-Key'] = 'p256ecdsa=' + p256ecdsa;
 
     return headers;
   });
@@ -415,7 +496,8 @@ RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, heade
 // |encryption|. Will throw an error if the |encryption| option is not recognized.
 RequestGenerator.prototype.amendMessageForEncryptionFailure = function(encryption, message) {
   switch (encryption) {
-    case 'valid':
+    case 'valid-03':
+    case 'valid-08':
       // Nothing to do, the encryption is meant to be valid.
       break;
     case 'content-encoding-missing':
@@ -461,7 +543,8 @@ RequestGenerator.prototype.amendMessageForEncryptionFailure = function(encryptio
 // value of |encryption|. Will throw an error if the |encryption| option is not recognized.
 RequestGenerator.prototype.amendHeadersForEncryptionFailure = function(encryption, headers) {
   switch (encryption) {
-    case 'valid':
+    case 'valid-03':
+    case 'valid-08':
       // Nothing to do, the encryption is meant to be valid.
       break;
     case 'crypto-key-invalid':
@@ -709,7 +792,7 @@ PushGenerator.prototype.createRequest = function() {
   // Message settings
   var payload = this.getField(state, 'payload', 'text');
   var padding = parseInt(this.getField(state, 'padding', '0'), 10);
-  var encryption = this.getField(state, 'encryption', 'valid');
+  var encryption = this.getField(state, 'encryption', 'valid-03');
 
   // Request settings
   var protocol = this.getField(state, 'protocol', 'web-push');
@@ -717,7 +800,7 @@ PushGenerator.prototype.createRequest = function() {
   return this.subscriptionGenerator_.getSubscription().then(function(subscription) {
     return Promise.all([
       subscription,
-      self.messageGenerator_.createMessage(subscription, payload, padding)
+      self.messageGenerator_.createMessage(subscription, payload, padding, encryption)
     ]);
 
   }).then(function(arguments) {

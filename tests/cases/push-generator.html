@@ -1,5 +1,5 @@
       <style>
-        
+
       </style>
       <script src="/cases/common.js"></script>
       <script src="/cases/webcrypto-push-encryption.js"></script>
@@ -95,16 +95,17 @@
           <li>
             <label for="encryption">Encryption</label>
             <select id="encryption">
-              <option data-id="0" value="valid">Valid</option>
-              <option data-id="1" value="content-encoding-missing">Missing Content-Encoding header</option>
-              <option data-id="2" value="content-encoding-invalid">Invalid Content-Encoding value</option>
-              <option data-id="3" value="crypto-key-missing">Missing Crypto-Key header</option>
-              <option data-id="4" value="crypto-key-invalid">Invalid Crypto-Key `p256dh` value</option>
-              <option data-id="5" value="encryption-missing">Missing Encryption header</option>
-              <option data-id="6" value="encryption-invalid-salt-length">Invalid Encryption `salt` length</option>
-              <option data-id="7" value="encryption-invalid-salt-value">Invalid Encryption `salt` value</option>
-              <option data-id="8" value="encryption-invalid-rs">Invalid Encryption `rs` value</option>
-              <option data-id="9" value="aesgcm-invalid">Invalid AES-GCM authentication tag</option>
+              <option data-id="0" value="valid-03">Valid (draft -03)</option>
+              <option data-id="1" value="valid-08">Valid (draft -08)</option>
+              <option data-id="2" value="content-encoding-missing">Missing Content-Encoding header</option>
+              <option data-id="3" value="content-encoding-invalid">Invalid Content-Encoding value</option>
+              <option data-id="4" value="crypto-key-missing">Missing Crypto-Key header</option>
+              <option data-id="5" value="crypto-key-invalid">Invalid Crypto-Key `p256dh` value</option>
+              <option data-id="6" value="encryption-missing">Missing Encryption header</option>
+              <option data-id="7" value="encryption-invalid-salt-length">Invalid Encryption `salt` length</option>
+              <option data-id="8" value="encryption-invalid-salt-value">Invalid Encryption `salt` value</option>
+              <option data-id="9" value="encryption-invalid-rs">Invalid Encryption `rs` value</option>
+              <option data-id="10" value="aesgcm-invalid">Invalid AES-GCM authentication tag</option>
             </select>
           </li>
         </ol>
