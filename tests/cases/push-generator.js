@@ -72,9 +72,9 @@ SubscriptionGenerator.prototype.getSubscription = function() {
 };
 
 // Subscribes from a |source|, which must be one of { 'document', 'service-worker' }, authenticating
-// with the push service using |authentication|, which must be one of { 'public-key', 'sender-id',
-// 'none' }. The |userVisibleOnly| contract may optionally be set. Returns a promise that will be
-// resolved with the subscription once this has completed.
+// with the push service using |authentication|, which must be one of { 'public-key',
+// 'public-key-v2', sender-id', 'none' }. The |userVisibleOnly| contract may optionally be set.
+// Returns a promise that will be resolved with the subscription once this has completed.
 SubscriptionGenerator.prototype.subscribe = function(authentication, source, userVisibleOnly) {
   var subscriptionOptions = {};
 
@@ -82,6 +82,7 @@ SubscriptionGenerator.prototype.subscribe = function(authentication, source, use
 
   switch (authentication) {
     case 'public-key':
+    case 'public-key-v2':
       subscriptionOptions.applicationServerKey = SubscriptionGenerator.PUBLIC_KEY;
       break;
     case 'sender-id':
@@ -283,9 +284,9 @@ RequestGenerator.GCM_API_KEY = 'AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
 
 // Creates the required information for a request to send |message| to the |subscription|. The
 // |protocol| must be one of { 'web-push', 'gcm' }, and the |authentication| must be one of the
-// following: { 'public-key', 'sender-id', 'none' }. Will return a promise that will be resolved
-// with the request information when the operation has completed. The |encryption| property
-// indicates whether a deliberate failure should be introduced in the message.
+// following: { 'public-key', 'public-key-v2', sender-id', 'none' }. Will return a promise that will
+// be resolved with the request information when the operation has completed. The |encryption|
+// property indicates whether a deliberate failure should be introduced in the message.
 RequestGenerator.prototype.createRequest = function(subscription, message, protocol, authentication,
                                                     encryption) {
   // Apply deliberate failures to the |message|.
@@ -387,7 +388,8 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   // information that will be send to the push service.
   switch (authentication) {
     case 'public-key':
-      authenticateRequestPromise = this.createAuthenticationHeader(endpoint, headers);
+    case 'public-key-v2':
+      authenticateRequestPromise = this.createAuthenticationHeader(endpoint, headers, authentication);
       break;
     case 'sender-id':
       headers['Authorization'] = 'key=' + RequestGenerator.GCM_API_KEY;
@@ -442,7 +444,7 @@ RequestGenerator.prototype.extractSubscriptionId = function(endpoint) {
 // Creates the Authorization header field with credentials matching a valid JWT token per the
 // Voluntary Application Server Identification for Web Push specification:
 // https://tools.ietf.org/html/draft-thomson-webpush-vapid
-RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, headers) {
+RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, headers, authentication) {
   var tokenHeader = {
     typ: 'JWT',
     alg: 'ES256'
@@ -482,11 +484,20 @@ RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, heade
     var jsonWebToken = unsignedToken + '.' + toBase64Url(signature);
     var p256ecdsa = toBase64Url(new Uint8Array(SubscriptionGenerator.PUBLIC_KEY));
 
-    headers['Authorization'] = 'Bearer ' + jsonWebToken;
-    if (headers.hasOwnProperty('Crypto-Key'))
-      headers['Crypto-Key'] += '; p256ecdsa=' + p256ecdsa;
-    else
-      headers['Crypto-Key'] = 'p256ecdsa=' + p256ecdsa;
+    switch (authentication) {
+      case 'public-key':
+        headers['Authorization'] = 'WebPush ' + jsonWebToken;
+        if (headers.hasOwnProperty('Crypto-Key'))
+          headers['Crypto-Key'] += '; p256ecdsa=' + p256ecdsa;
+        else
+          headers['Crypto-Key'] = 'p256ecdsa=' + p256ecdsa;
+        break;
+      case 'public-key-v2':
+        headers['Authorization'] = 'vapid t=' + jsonWebToken + ', k=' + p256ecdsa;
+        break;
+      default:
+        throw new Error('Invalid authentication: ' + authentication);
+    }
 
     return headers;
   });
