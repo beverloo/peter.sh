@@ -17,9 +17,6 @@ class Configuration {
     // Path to the local Chromium checkout.
     public static $chromiumCheckout = '';
 
-    // DEPRECATED: URL to the Chromium repository tool.
-    public static $chromiumRepoTool = '';
-
     // E-mail address to which Chromium command-line switch updates should be send.
     public static $commandLineUpdateAddress = 'chromium-command-line-updates@googlegroups.com';
 
