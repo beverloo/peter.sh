@@ -11,3 +11,12 @@ php_value error_reporting -1
 # Disallow access to .git and .gitignore entirely.
 RedirectMatch 404 /\.git
 RedirectMatch 404 /\.gitignore
+
+# Redirects to make the old blog content work
+RewriteRule ^(style|javascript|images)/(.+?)$ /wordpress/wp-content/themes/default/$1/$2 [L]
+RewriteRule ^chromium-switches(/)? /wordpress/experiments/chromium-command-line-switches/ [L,R=301]
+
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /wordpress/index.php [L]
