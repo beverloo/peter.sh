@@ -1,1 +1,2 @@
+components/network_session_configurator/common/network_switches.cc
 tools/gn/switches.cc

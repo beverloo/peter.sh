@@ -441,25 +441,27 @@ class CommandLineFlags extends Service {
         return $conditions;
     }
 
-    // Loads a list of the switch files from the Git repository, accompanied by the contents
-    // of said file to prevent several round-trips between the servers.
+    // Loads a list of the switch files from the Git repository.
     private function loadSwitchFiles() {
-        $requestUrl = Configuration::$chromiumRepoTool . '?repository=/&command=switch-files';
+        $directory = getcwd();
+        $data = [];
 
-        $response = @ file_get_contents($requestUrl);
-        if ($response === false) {
-            Error('CommandLineFlags: Unable to fetch a list of switch files from the repository.');
-            return array();
+        chdir(Configuration::$chromiumCheckout);
+        {
+            $files = preg_split('/\s+/s', shell_exec('git ls-files --with-tree origin/master -x "*switches.cc" --ignored'), 0, PREG_SPLIT_NO_EMPTY);
+            foreach ($files as $filename) {
+                $absolute = Configuration::$chromiumCheckout . '/' . $filename;
+                if (!file_exists($absolute)) {
+                    Error('CommandLineFlags: Invalid file from git index: ' . $filename);
+                    return [];
+                }
+
+                $data[$filename] = file_get_contents($absolute);
+            }
         }
+        chdir($directory);
 
-        $files = json_decode($response, true);
-        if ($files === null) {
-            Error('CommandLineFlags: Unable to decode the list of switch files from the repository.');
-            Error('CommandLineFlags: ' . substr($response, 0, 128));
-            return array();
-        }
-
-        return $files;
+        return $data;
     }
 
 };
