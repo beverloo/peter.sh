@@ -14,7 +14,10 @@ class Configuration {
     public static $databasePassword = '';
     public static $databaseName = '';
 
-    // URL to the Chromium repository tool.
+    // Path to the local Chromium checkout.
+    public static $chromiumCheckout = '';
+
+    // DEPRECATED: URL to the Chromium repository tool.
     public static $chromiumRepoTool = '';
 
     // E-mail address to which Chromium command-line switch updates should be send.
