@@ -92,20 +92,21 @@ class RepositoryTracker extends Service {
     // in our MySQL database. Only git repositories will be considered for this purpose.
     public function updateRepositories() {
         $projects = $this->loadProjects();
-        if (count($projects) == 0)
+        if (!$projects)
             return;
 
         $this->m_authors = $this->loadAuthors();
 
-        foreach ($projects as $project) {
-            if (!$project['ignore'])
-                $this->updateProject($project);
-        }
+        foreach ($projects as $project)
+            $this->updateProject($project);
     }
 
     // Synchronizes the status of |$project| using a live version of the repository, as defined in
     // the configuration for this service.
     private function updateProject($project) {
+        if ($project['ignore'])
+            return;  // this project should be ignored.
+
         $revisions = $this->loadNewRevisions($project);
         if (count($revisions) == 0)
             return;  // no new commits or an error.
@@ -117,7 +118,7 @@ class RepositoryTracker extends Service {
             VALUES
                 (?, FROM_UNIXTIME(?), ?, ?, ?)');
 
-        if ($statement === false) {
+        if (!$statement) {
             Error('RepositoryTracker: Unable to prepare a database statement for insertion in tracking_revisions.');
             return;
         }
@@ -189,7 +190,7 @@ class RepositoryTracker extends Service {
         );
 
         $projects = $this->loadProjects();
-        if ($projects === false)
+        if (!$projects)
             return;
         
         $emptyProject = array('@revisions' => 0, '@authors' => 0);
@@ -322,26 +323,46 @@ class RepositoryTracker extends Service {
     // Loads a list of the new revisions which have landed since |$project.rev| happened. The actual
     // revisions will be loaded from a remote location.
     private function loadNewRevisions($project) {
-        if ($project == 1)
-            return array();
+        chdir($project['path']);
 
-        $serviceUrl = Configuration::$chromiumRepoTool . '?repository=' . $project['path'];
-        $logRequest = $serviceUrl . '&command=log&branch=' . $project['branch'] . '&since=' . $project['rev'];
+        /* const */ $limit = 5000;
 
-        $logData = @ file_get_contents($logRequest);
-        if ($logData === false) {
-            Error('RepositoryTracker: Unable to fetch logs for repository ' . $project['name'] . '.');
-            return array();
+        /* const */ $commit_separator = '\x1e';
+        /* const */ $field_separator = '\x1f';
+
+        $format = implode($field_separator, array('%H', '%aE', '%cd', '%B')) . $commit_separator;
+        $since = $project['rev'];
+        $branch = $project['branch'];
+
+        // git log --format=".." --reverse fe23c30...HEAD origin/master
+        $command  = 'git log --format="' . $format . '" --reverse ' . $since . '...' . $branch . ' ' . $branch;
+
+        $output = shell_exec($command);
+        $commits = [];
+
+        foreach (explode($commit_separator, $output) as $commit) {
+            $fields = explode($field_separator, trim($commit));
+            if (count($fields) != 4)
+                continue;
+
+            $hash = trim($fields[0]);
+            if (strlen($hash) != 40) {
+                Error('RepositoryTracker: Cannot parse hash for ' . $project['name'] . ': ' . $hash);
+                return [];
+            }
+
+            $commits[] = [
+                'hash'      => $hash,
+                'author'    => $fields[1],
+                'date'      => $fields[2],
+                'message'   => trim($fields[3])
+            ];
+
+            if (count($commits) >= $limit)
+                break;
         }
 
-        $log = json_decode($logData, true);
-        if ($log === null) {
-            Error('RepositoryTracker: Unable to decode logs for repository ' . $project['name'] . '.');
-            Error('RepositoryTracker: Error: ' . substr($logData, 0, 256));
-            return array();
-        }
-
-        return $log;
+        return $commits;
     }
 
     // Loads a list of authors known to the system.
@@ -395,7 +416,7 @@ class RepositoryTracker extends Service {
 
         if ($result === false) {
             Error('RepositoryTracker: Unable to retrieve a list of projects from the database.');
-            return array();
+            return false;
         }
 
         $projects = array();
@@ -410,8 +431,10 @@ class RepositoryTracker extends Service {
             );
         }
 
-        if (count($projects) == 0)
+        if (!count($projects)) {
             Error('RepositoryTracker: No projects have been specified in the database.');
+            return false;
+        }
 
         return $projects;
     }
