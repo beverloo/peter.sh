@@ -3,6 +3,9 @@
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
 
+require_once __DIR__ . '/CssPropertyParser.php';
+require_once __DIR__ . '/parsers/CssPropertyParserBlink.php';
+
 class CSSProperties extends Service {
     // Registers the task using which we'll poll for new CSS properties in WebKit,
     // Blink and Gecko. Trident will (still) have to be updated manually.
@@ -28,7 +31,7 @@ class CSSProperties extends Service {
                     FROM
                         css_properties inner_tbl
                     WHERE
-                        inner_tbl.removed = "0000-00-00 00:00:00" AND
+                        inner_tbl.removed IS NULL AND
                         inner_tbl.property_engine_name = css_properties.property_engine_name
                 ) AS property_count
             FROM
@@ -43,7 +46,7 @@ class CSSProperties extends Service {
         while ($result !== false && $row = $result->fetch_assoc()) {
             $link = 'http://peter.sh/experiments/vendor-prefixed-css-properties-' . strtolower($row['property_engine_name']) . '/';
             $date = strtotime($row['last_updated']);
-            
+
             if ($last_updated < $date)
                 $last_updated = $date;
 
@@ -68,7 +71,6 @@ class CSSProperties extends Service {
     // ---------------------------------------------------------------------------------------------
 
     // Source files (publicly accessible) for the properties of the engines we want to support.
-    const BlinkSourceFile = 'https://secure.peter.sh/git/chromium/src/third_party/WebKit/Source/core/css/CSSProperties.in';
     const WebKitSourceFile = 'http://trac.webkit.org/export/HEAD/trunk/Source/WebCore/css/CSSPropertyNames.in';
     const GeckoSourceFile = 'http://hg.mozilla.org/mozilla-central/raw-file/tip/layout/style/nsCSSPropList.h';
     const TridentFile = 'trident.txt';
@@ -159,10 +161,12 @@ class CSSProperties extends Service {
             WHERE
                 property_id = ?');
 
-        $this->updatePropertiesForEngine('Blink', $this->loadSwitchesFromWebKitList(self::BlinkSourceFile));
-        $this->updatePropertiesForEngine('WebKit', $this->loadSwitchesFromWebKitList(self::WebKitSourceFile));
-        $this->updatePropertiesForEngine('Gecko', $this->loadSwitchesFromGeckoList(self::GeckoSourceFile));
-        $this->updatePropertiesForEngine('Trident', $this->loadSwitchesFromFile(self::TridentFile));
+        $this->updatePropertiesForEngine('Blink', $this->loadSwitchesWithParser(CssPropertyParserBlink::class));
+
+        // TODO(peter): Update the parsers for the other engines.
+        //$this->updatePropertiesForEngine('WebKit', $this->loadSwitchesFromWebKitList(self::WebKitSourceFile));
+        //$this->updatePropertiesForEngine('Gecko', $this->loadSwitchesFromGeckoList(self::GeckoSourceFile));
+        //$this->updatePropertiesForEngine('Trident', $this->loadSwitchesFromFile(self::TridentFile));
     }
 
     // Loads the existing properties for |$engine| from the database, diffs that against
@@ -189,6 +193,10 @@ class CSSProperties extends Service {
             if (!array_key_exists($property, $properties)) {
                 $this->m_removeStatement->bind_param('i', $databaseId);
                 $this->m_removeStatement->execute();
+
+                if ($this->m_removeStatement->error)
+                    Error('CssProperties: remove error: ' . $this->m_removeStatement->error);
+
                 $removed++;
             }
 
@@ -196,8 +204,14 @@ class CSSProperties extends Service {
         }
 
         foreach ($properties as $property => $unused) {
-            $this->m_createStatement->bind_param('sss', $property, $this->unprefixedName($property), $engine);
+            $unprefixedName = $this->unprefixedName($property);
+
+            $this->m_createStatement->bind_param('sss', $property, $unprefixedName, $engine);
             $this->m_createStatement->execute();
+
+            if ($this->m_createStatement->error)
+                Error('CssProperties: create error: ' . $this->m_createStatement->error);
+
             $created++;
         }
 
@@ -219,7 +233,7 @@ class CSSProperties extends Service {
             FROM
                 css_properties
             WHERE
-                css_properties.removed = "0000-00-00 00:00:00" AND
+                css_properties.removed IS NULL AND
                 css_properties.property_engine_name = "' . $this->database()->real_escape_string($engine) . '"
             ORDER BY
                 css_properties.property_name ASC');
@@ -234,6 +248,13 @@ class CSSProperties extends Service {
             $properties[$row['property_name']] = $row['property_id'];
 
         return $properties;
+    }
+
+    // Loads the switches by initializing and using the given |$parserClass|. Returns an array whose
+    // keys are the alphabetized names of CSS properties, associated with arbitrary, unused values.
+    private function loadSwitchesWithParser($parserClass) {
+        $instance = new $parserClass();
+        return array_flip($instance->parse());
     }
 
     // Loads the contents of |$location| and parses it as if it were a WebKit-styled list of
