@@ -50,7 +50,7 @@ class AutoDeploy extends Service {
         if (!unlink($scheduledFile))
             return;
 
-        if ((time() - $requested) > 600)
+        if ((time() - intval(trim($requested))) > 600)
             return;
 
         $commands = [
