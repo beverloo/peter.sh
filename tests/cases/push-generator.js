@@ -603,6 +603,9 @@ PushGenerator.prototype.unsubscribe = function() {
 
 // Displays a dialog box with information about the subscription available to the user.
 PushGenerator.prototype.displaySubscription = function() {
+  if (!this.verifyRequirements())
+    return;
+
   var self = this;
 
   return this.subscriptionGenerator_.getSubscription().then(function(subscription) {
@@ -674,14 +677,27 @@ PushGenerator.prototype.displayMessage = function() {
   this.createRequest().then(function(request) {
     var content = document.getElementById('message-info-dialog').cloneNode(true /* deep */);
     var headers = [];
+    var curlCommand = 'curl "' + request.url + '" --request POST';
 
     Object.keys(request.headers).forEach(function(headerName) {
       headers.push(headerName + ': ' + request.headers[headerName]);
+      curlCommand += ' --header "' + headerName + ': ' + request.headers[headerName] + '"';
     });
 
     content.querySelector('#endpoint').textContent = request.url;
     content.querySelector('#headers').textContent = headers.join('\n');
     content.querySelector('#body').textContent = request.body;
+
+    if (request.body instanceof ArrayBuffer) {
+      curlError = 'Since web push protocol requires a stream as ' +
+          'the body of the request, there is no CURL command that will ' +
+          'stream an encrypted payload.';
+      content.querySelector('#error').textContent = curlError;
+    } else {
+      // content-length is needed for the curl request.
+      curlCommand += ' --header "Content-Length: 0"';
+      content.querySelector('#request').textContent = curlCommand;
+    }
 
     document.location.hash =
         self.serialize(self.computeState(false /* includeDefault */));
