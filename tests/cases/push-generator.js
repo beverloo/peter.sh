@@ -681,7 +681,7 @@ PushGenerator.prototype.displayMessage = function() {
 
     Object.keys(request.headers).forEach(function(headerName) {
       headers.push(headerName + ': ' + request.headers[headerName]);
-      curlCommand += ' --header "' + headerName + ': ' + request.headers[headerName] + '"';
+      var curlCommand += ' --header "' + headerName + ': ' + request.headers[headerName] + '"';
     });
 
     content.querySelector('#endpoint').textContent = request.url;
