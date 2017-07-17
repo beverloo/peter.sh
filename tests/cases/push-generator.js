@@ -681,7 +681,7 @@ PushGenerator.prototype.displayMessage = function() {
 
     Object.keys(request.headers).forEach(function(headerName) {
       headers.push(headerName + ': ' + request.headers[headerName]);
-      var curlCommand += ' --header "' + headerName + ': ' + request.headers[headerName] + '"';
+      curlCommand += ' --header "' + headerName + ': ' + request.headers[headerName] + '"';
     });
 
     content.querySelector('#endpoint').textContent = request.url;
@@ -689,7 +689,7 @@ PushGenerator.prototype.displayMessage = function() {
     content.querySelector('#body').textContent = request.body;
 
     if (request.body instanceof ArrayBuffer) {
-      curlError = 'Since web push protocol requires a stream as ' +
+      var curlError = 'Since web push protocol requires a stream as ' +
           'the body of the request, there is no CURL command that will ' +
           'stream an encrypted payload.';
       content.querySelector('#error').textContent = curlError;
