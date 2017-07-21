@@ -787,7 +787,7 @@ PushGenerator.prototype.displayMessage = function() {
 
     const isArrayBuffer = request.body instanceof ArrayBuffer;
     content.querySelector('#request').classList.toggle("no-display", isArrayBuffer);
-    if (!isArrayBuffer)
+    if (!isArrayBuffer) {
       // content-length is needed for the curl request.
       curlCommand += ' --header "Content-Length: 0"';
       content.querySelector('#request').textContent = curlCommand;

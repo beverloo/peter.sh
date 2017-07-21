@@ -46,6 +46,8 @@
 
 .no-display { display: none; }
 
+.curl { font-size: .7em; color: #555; }
+
 .dialog-overlay {
   position: fixed;
   z-index: 1;
