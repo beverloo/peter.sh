@@ -44,6 +44,8 @@
 
 .dialog-content { display: none; }
 
+.no-display { display: none; }
+
 .dialog-overlay {
   position: fixed;
   z-index: 1;
