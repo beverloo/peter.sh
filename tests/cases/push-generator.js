@@ -259,8 +259,30 @@ MessageGenerator.prototype.createMessage = function(subscription, payload, paddi
         throw new Error('Invalid encryption value: ' + encryption);
     }
 
+    var payloadText = null;
+    switch (payload) {
+      case '_text':
+        // Default textual value. Contents don't matter.
+        payloadText = 'Hello, world!';
+        break;
+
+      case '_empty':
+        // Empty string. This only provides authentication.
+        payloadText = '';
+        break;
+
+      case '_none':
+        // No payload at all. No need to invoke the cryptographer.
+        return Promise.resolve({ ciphertext: null });
+
+      default:
+        // User-defined payload. Could be anything.
+        payloadText = payload;
+        break;
+    }
+
     return Promise.all([
-      cryptographer.encrypt(salt, payload, padding),
+      cryptographer.encrypt(salt, payloadText, padding),
       serverKeyPair.exportPublicKey()
     ]).then(function(results) {
       return {
@@ -303,83 +325,85 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
   // Request body that is to be send with the request.
   var body = '';
 
-  switch (encryption) {
-    case 'valid-03':
-    case 'content-encoding-missing':
-    case 'content-encoding-invalid':
-    case 'crypto-key-missing':
-    case 'encryption-missing':
-    case 'encryption-invalid-rs':
-    case 'crypto-key-invalid':
-    case 'encryption-invalid-salt-length':
-    case 'encryption-invalid-salt-value':
-    case 'aesgcm-invalid':
-      var encodedPublicKey = toBase64Url(message.p256dh);
-      var encodedSalt = toBase64Url(message.salt);
+  if (message.ciphertext) {
+    switch (encryption) {
+      case 'valid-03':
+      case 'content-encoding-missing':
+      case 'content-encoding-invalid':
+      case 'crypto-key-missing':
+      case 'encryption-missing':
+      case 'encryption-invalid-rs':
+      case 'crypto-key-invalid':
+      case 'encryption-invalid-salt-length':
+      case 'encryption-invalid-salt-value':
+      case 'aesgcm-invalid':
+        var encodedPublicKey = toBase64Url(message.p256dh);
+        var encodedSalt = toBase64Url(message.salt);
 
-      headers['Crypto-Key'] = 'dh=' + encodedPublicKey;
-      headers['Encryption'] = 'salt=' + encodedSalt;
+        headers['Crypto-Key'] = 'dh=' + encodedPublicKey;
+        headers['Encryption'] = 'salt=' + encodedSalt;
 
-      // Depending on the protocol, we either want the request's body to be the binary payload of the
-      // message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
-      switch (protocol) {
-        case 'web-push':
-          headers['Content-Encoding'] = 'aesgcm';
-          body = message.ciphertext;
-          break;
-        case 'gcm':
-          headers['Content-Type'] = 'application/json';
-          body = JSON.stringify({
-            'to': this.extractSubscriptionId(subscription.endpoint),
-            'raw_data': toBase64(message.ciphertext)
-          });
-          break;
-        default:
-          return Promise.reject(new Error('Invalid protocol: ' + protocol));
-      }
-      break;
-    case 'valid-08':
-      // The message will feature a binary header that contains the message's salt and the sender's
-      // public key. No headers will be used anymore for this purpose.
-      var messageHeader = new Uint8Array(16 + 4 + 1 + 65 + message.ciphertext.byteLength);
-      var offset = 0;
+        // Depending on the protocol, we either want the request's body to be the binary payload of
+        // the message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
+        switch (protocol) {
+          case 'web-push':
+            headers['Content-Encoding'] = 'aesgcm';
+            body = message.ciphertext;
+            break;
+          case 'gcm':
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify({
+              'to': this.extractSubscriptionId(subscription.endpoint),
+              'raw_data': toBase64(message.ciphertext)
+            });
+            break;
+          default:
+            return Promise.reject(new Error('Invalid protocol: ' + protocol));
+        }
+        break;
+      case 'valid-08':
+        // The message will feature a binary header that contains the message's salt and the
+        // sender's public key. No headers will be used anymore for this purpose.
+        var messageHeader = new Uint8Array(16 + 4 + 1 + 65 + message.ciphertext.byteLength);
+        var offset = 0;
 
-      messageHeader.set(message.salt, offset);
-      offset += message.salt.byteLength;
+        messageHeader.set(message.salt, offset);
+        offset += message.salt.byteLength;
 
-      messageHeader.set([ 0x00, 0x00, 0x10, 0x00 ], offset);  // 0x1000 = 4096
-      offset += 4;
+        messageHeader.set([ 0x00, 0x00, 0x10, 0x00 ], offset);  // 0x1000 = 4096
+        offset += 4;
 
-      messageHeader.set([ 0x41 ], offset);  // 0x41 = 65
-      offset += 1;
+        messageHeader.set([ 0x41 ], offset);  // 0x41 = 65
+        offset += 1;
 
-      messageHeader.set(message.p256dh, offset);
-      offset += message.p256dh.byteLength;
+        messageHeader.set(message.p256dh, offset);
+        offset += message.p256dh.byteLength;
 
-      messageHeader.set(new Uint8Array(message.ciphertext), offset);
+        messageHeader.set(new Uint8Array(message.ciphertext), offset);
 
-      // Always set the Content-Encoding header to `aes128gcm`.
-      headers['Content-Encoding'] = 'aes128gcm';
+        // Always set the Content-Encoding header to `aes128gcm`.
+        headers['Content-Encoding'] = 'aes128gcm';
 
-      // Depending on the protocol, we either want the request's body to be the binary payload of the
-      // message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
-      switch (protocol) {
-        case 'web-push':
-          body = messageHeader;
-          break;
-        case 'gcm':
-          headers['Content-Type'] = 'application/json';
-          body = JSON.stringify({
-            'to': this.extractSubscriptionId(subscription.endpoint),
-            'raw_data': toBase64(messageHeader)
-          });
-          break;
-        default:
-          return Promise.reject(new Error('Invalid protocol: ' + protocol));
-      }
-      break;
-    default:
-      throw new Error('Invalid encryption value: ' + encryption);
+        // Depending on the protocol, we either want the request's body to be the binary payload of
+        // the message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
+        switch (protocol) {
+          case 'web-push':
+            body = messageHeader;
+            break;
+          case 'gcm':
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify({
+              'to': this.extractSubscriptionId(subscription.endpoint),
+              'raw_data': toBase64(messageHeader)
+            });
+            break;
+          default:
+            return Promise.reject(new Error('Invalid protocol: ' + protocol));
+        }
+        break;
+      default:
+        throw new Error('Invalid encryption value: ' + encryption);
+    }
   }
 
   var authenticateRequestPromise = Promise.resolve(null /* headers */);
@@ -506,6 +530,9 @@ RequestGenerator.prototype.createAuthenticationHeader = function(endpoint, heade
 // Amends the contents of the |message| to create deliberate failures depending on the value of
 // |encryption|. Will throw an error if the |encryption| option is not recognized.
 RequestGenerator.prototype.amendMessageForEncryptionFailure = function(encryption, message) {
+  if (!message.ciphertext)
+    return message;
+
   switch (encryption) {
     case 'valid-03':
     case 'valid-08':
