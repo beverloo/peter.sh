@@ -6,8 +6,8 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('backgroundfetched', function(event) {
-  console.log('Received the BackgroundFetched event');
+function handleBackgroundFetchEvent(eventName, event) {
+  console.log('Received the ' + eventName + ' event');
 
   var promii = [];
 
@@ -74,7 +74,10 @@ self.addEventListener('backgroundfetched', function(event) {
   // Distribute the |results| to all controlled window |clients|.
   event.waitUntil(Promise.all(promii).then(results => {
     clients.matchAll({ type: 'window' })
-      .then(clients => clients.forEach(client => client.postMessage(results)));
+      .then(clients => clients.forEach(client => client.postMessage({ eventName, results })));
   }));
 
-});
+}
+
+self.addEventListener('backgroundfetched', handleBackgroundFetchEvent.bind(null, 'backgroundfetched'));
+self.addEventListener('backgroundfetchfail', handleBackgroundFetchEvent.bind(null, 'backgroundfetchfail'));
