@@ -18,6 +18,7 @@
   </head>
   <body>
     <input type="button" id="start-fetch" value="Start a background fetch..." disabled />
+    <h1 id="result-name"></h1>
     <ol id="result-list"></ol>
     <script>
       var startButton = document.getElementById('start-fetch');
@@ -25,16 +26,16 @@
         .then(registration => navigator.serviceWorker.ready)
         .then(registration => {
           startButton.addEventListener('click', () => {
-            var tag = 'my-fetch';
+            var id = 'my-fetch';
             var requests = [
               '/resources/icons/15.jpg',  // cat
               '/resources/random-cat-joke.php',  // text
-              //'https://static.peter.sh/images/play-blue.png',  // CORS not allowed
-              //'https://static.peter.sh/cors/1.png',  // CORS and allowed
+              'https://static.peter.sh/images/play-blue.png',  // CORS not allowed
+              'https://static.peter.sh/cors/1.png',  // CORS and allowed
             ];
             var options = {};
 
-            registration.backgroundFetch.fetch(tag, requests, options)
+            registration.backgroundFetch.fetch(id, requests, options)
               .then(backgroundFetchRegistration => {
                 console.log('Registered the Background Fetch', backgroundFetchRegistration);
               });
@@ -43,10 +44,14 @@
           startButton.disabled = false;
         });
 
-      var resultList = document.getElementById('result-list');
+      var resultList = document.getElementById('result-list'),
+          resultName = document.getElementById('result-name');
+
       navigator.serviceWorker.addEventListener('message', event => {
         resultList.innerHTML = '';  // clear previous results
-        event.data.forEach(result => {
+        resultName.innerText = event.data.eventName;
+
+        event.data.results.forEach(result => {
           var listItem = document.createElement('li'),
               resourceName = document.createElement('h1'),
               resourceStatus = document.createElement('h2'),
@@ -71,7 +76,7 @@
             resourceView = document.createElement('span');
             resourceView.textContent = 'No response data could be read.';
 
-          } else if (result.url.endsWith('jpg')) {
+          } else if (result.url.endsWith('jpg') || result.url.endsWith('png')) {
             resourceView = document.createElement('img');
             resourceView.src = 'data:image/jpg;base64,' + result.data;
 
