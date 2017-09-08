@@ -347,6 +347,7 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
         // the message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
         switch (protocol) {
           case 'web-push':
+          case 'web-push2':
             headers['Content-Encoding'] = 'aesgcm';
             body = message.ciphertext;
             break;
@@ -388,6 +389,7 @@ RequestGenerator.prototype.createRequest = function(subscription, message, proto
         // the message (Web Push Protocol), or the data encoded in a minimalistic JSON format (GCM).
         switch (protocol) {
           case 'web-push':
+          case 'web-push2':
             body = messageHeader;
             break;
           case 'gcm':
@@ -448,6 +450,8 @@ RequestGenerator.prototype.determineSubscriptionEndpoint = function(endpoint, pr
   switch (protocol) {
     case 'web-push':
       return 'https://jmt17.google.com/gcm/demo-webpush-00/' + subscriptionId;
+    case 'web-push2':
+      return 'https://fcm.googleapis.com/wp/' + subscriptionId;
     case 'gcm':
       return 'https://android.googleapis.com/gcm/send';  // no subscription Id
     default:
