@@ -15,6 +15,8 @@
         height: 100px;
       }
 
+      #start-fetch { margin-bottom: 1em; }
+
       fieldset {
         border: 1px solid #aaa;
         border-radius: 8px;
@@ -36,14 +38,27 @@
   <body>
     <fieldset>
       <h1>Options</h1>
+      <label for="abort"><input type="checkbox" id="abort" checked /> Abort previous fetches</label>
       <label for="title"><input type="checkbox" id="title" checked /> Provide a proper title</label>
+      <label for="delay"><input type="checkbox" id="delay" checked /> Delay the request by
+        <select id="delay-seconds">
+          <option>1</option>
+          <option>5</option>
+          <option>10</option>
+          <option>30</option>
+          <option>60</option>
+          <option>120</option>
+        </select> seconds</label>
     </fieldset>
     <input type="button" id="start-fetch" value="Start a background fetch..." disabled />
     <h1 id="result-name"></h1>
     <ol id="result-list"></ol>
     <script>
       var startButton = document.getElementById('start-fetch'),
-          title = document.getElementById('title');
+          abort = document.getElementById('abort'),
+          title = document.getElementById('title'),
+          delay = document.getElementById('delay'),
+          delaySeconds = document.getElementById('delay-seconds');
 
       navigator.serviceWorker.register('background-fetch-content-sw.js', { scope: location.pathname })
         .then(registration => navigator.serviceWorker.ready)
@@ -61,9 +76,22 @@
             if (title.checked)
               options.title = 'Aelurophile starter kit';
 
-            registration.backgroundFetch.fetch(id, requests, options)
-              .then(backgroundFetchRegistration => {
-                console.log('Registered the Background Fetch', backgroundFetchRegistration);
+            if (delay.checked)
+              requests.push('/resources/slow-cat-icon-response.php?delay=' + delaySeconds.value);
+
+            var promise = Promise.resolve();
+            if (abort.checked) {
+              var idFn = BackgroundFetchManager.prototype.hasOwnProperty('getIds') ? 'getIds' : 'getTags';
+              promise = registration.backgroundFetch[idFn]()
+                .then(ids => Promise.all(ids.map(id => registration.backgroundFetch.get(id))))
+                .then(regs => Promise.all(regs.map(reg => reg.abort())));
+            }
+
+            promise.then(() => {
+              registration.backgroundFetch.fetch(id, requests, options)
+                .then(backgroundFetchRegistration => {
+                  console.log('Registered the Background Fetch', backgroundFetchRegistration);
+                });
               });
           });
 
