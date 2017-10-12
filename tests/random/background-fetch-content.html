@@ -14,14 +14,37 @@
         width: 500px;
         height: 100px;
       }
+
+      fieldset {
+        border: 1px solid #aaa;
+        border-radius: 8px;
+        padding: 1em;
+        margin-bottom: 1em;
+        font-size: 16px;
+      }
+
+      fieldset h1 {
+        font-size: 1.2em;
+        margin-bottom: 8px;
+      }
+
+      fieldset label {
+        display: block;
+      }
     </style>
   </head>
   <body>
+    <fieldset>
+      <h1>Options</h1>
+      <label for="title"><input type="checkbox" id="title" checked /> Provide a proper title</label>
+    </fieldset>
     <input type="button" id="start-fetch" value="Start a background fetch..." disabled />
     <h1 id="result-name"></h1>
     <ol id="result-list"></ol>
     <script>
-      var startButton = document.getElementById('start-fetch');
+      var startButton = document.getElementById('start-fetch'),
+          title = document.getElementById('title');
+
       navigator.serviceWorker.register('background-fetch-content-sw.js', { scope: location.pathname })
         .then(registration => navigator.serviceWorker.ready)
         .then(registration => {
@@ -33,7 +56,10 @@
               'https://static.peter.sh/images/play-blue.png',  // CORS not allowed
               'https://static.peter.sh/cors/1.png',  // CORS and allowed
             ];
+
             var options = {};
+            if (title.checked)
+              options.title = 'Aelurophile starter kit';
 
             registration.backgroundFetch.fetch(id, requests, options)
               .then(backgroundFetchRegistration => {
