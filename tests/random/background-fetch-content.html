@@ -138,11 +138,15 @@
           listItem.appendChild(resourceHeaders);
 
           var resourceView = null;
+          var isImage = result.url.endsWith('jpg') || result.url.endsWith('png') ||
+                        (result.headers.hasOwnProperty('content-type') &&
+                         result.headers['content-type'].startsWith('image'));
+
           if (!result.data) {
             resourceView = document.createElement('span');
             resourceView.textContent = 'No response data could be read.';
 
-          } else if (result.url.endsWith('jpg') || result.url.endsWith('png')) {
+          } else if (isImage) {
             resourceView = document.createElement('img');
             resourceView.src = 'data:image/jpg;base64,' + result.data;
 
