@@ -115,5 +115,8 @@ $jokes = [
 
 $joke = $jokes[array_rand($jokes)];
 
-echo 'Q: ' . $joke['question'] . PHP_EOL;
-echo 'A: ' . $joke['answer'];
+$output  = 'Q: ' . $joke['question'] . PHP_EOL;
+$output .= 'A: ' . $joke['answer'];
+
+apache_setenv('no-gzip', '1');
+echo str_pad($output, 127 /* longest cat joke */, PHP_EOL);

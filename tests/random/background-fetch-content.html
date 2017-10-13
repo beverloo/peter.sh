@@ -40,6 +40,7 @@
       <h1>Options</h1>
       <label for="abort"><input type="checkbox" id="abort" checked /> Abort previous fetches</label>
       <label for="title"><input type="checkbox" id="title" checked /> Provide a proper title</label>
+      <label for="download-total"><input type="checkbox" id="download-total" checked /> Provide a proper `<code>downloadTotal</code>`</label>
       <label for="delay"><input type="checkbox" id="delay" checked /> Delay the request by
         <select id="delay-seconds">
           <option>1</option>
@@ -57,6 +58,7 @@
       var startButton = document.getElementById('start-fetch'),
           abort = document.getElementById('abort'),
           title = document.getElementById('title'),
+          downloadTotal = document.getElementById('download-total'),
           delay = document.getElementById('delay'),
           delaySeconds = document.getElementById('delay-seconds');
 
@@ -66,18 +68,28 @@
           startButton.addEventListener('click', () => {
             var id = 'my-fetch';
             var requests = [
-              '/resources/icons/15.jpg',  // cat
-              '/resources/random-cat-joke.php',  // text
-              'https://static.peter.sh/images/play-blue.png',  // CORS not allowed
-              'https://static.peter.sh/cors/1.png',  // CORS and allowed
+              '/resources/icons/15.jpg',  // cat, 17644 bytes
+              '/resources/random-cat-joke.php',  // text, 127 bytes through padding
+              'https://static.peter.sh/images/play-blue.png',  // CORS not allowed, 1242 bytes
+              'https://static.peter.sh/cors/1.png',  // CORS and allowed, 14093 bytes
             ];
 
             var options = {};
+            var downloadTotal = 17644 /* 15.png */ + 127 /* cat joke */ + 1242 /* play-blue.png */ +
+                                14093 /* 1.png */;
+
             if (title.checked)
               options.title = 'Aelurophile starter kit';
 
-            if (delay.checked)
-              requests.push('/resources/slow-cat-icon-response.php?delay=' + delaySeconds.value);
+            if (delay.checked) {
+              requests.push('/resources/slow-cat-icon-response.php?delay=' + delaySeconds.value);  // 17905 bytes
+              downloadTotal += 17905;
+            }
+
+            if (downloadTotal.checked) {
+              options.totalDownloadSize = downloadTotal; // <M62;
+              options.downloadTotal = downloadTotal;
+            }
 
             var promise = Promise.resolve();
             if (abort.checked) {
