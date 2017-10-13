@@ -33,6 +33,17 @@
       fieldset label {
         display: block;
       }
+
+      #progress li { margin-bottom: 0px; }
+      #progress {
+        padding-bottom: 0px;
+        display: none;
+      }
+
+      #progress span { color: #333; }
+      #progress span.red { color: red; }
+
+      progress { margin: 0 8px; }
     </style>
   </head>
   <body>
@@ -51,6 +62,11 @@
           <option>120</option>
         </select> seconds</label>
     </fieldset>
+    <fieldset id="progress">
+      <h1>Progress</h1>
+      <ol id="progress-list"></ol>
+    </fieldset>
+
     <input type="button" id="start-fetch" value="Start a background fetch..." disabled />
     <h1 id="result-name"></h1>
     <ol id="result-list"></ol>
@@ -58,13 +74,97 @@
       var startButton = document.getElementById('start-fetch'),
           abort = document.getElementById('abort'),
           title = document.getElementById('title'),
-          downloadTotal = document.getElementById('download-total'),
+          downloadTotalOpt = document.getElementById('download-total'),
           delay = document.getElementById('delay'),
           delaySeconds = document.getElementById('delay-seconds');
+
+      var progressContainer = document.getElementById('progress'),
+          progressList = document.getElementById('progress-list'),
+          progressState = [];
+
+      function observeProgress(backgroundFetchRegistration) {
+        var idFld = BackgroundFetchRegistration.prototype.hasOwnProperty('id') ? 'id' : 'tag';
+
+        if (!progressList.children.length)
+          progressContainer.style.display = 'block';
+
+        var counter = 1;
+        progressState.forEach(state => {
+          if (state == backgroundFetchRegistration[idFld])
+            ++counter;
+        });
+
+        var listElement = document.createElement('li'),
+            labelElement = document.createElement('strong'),
+            progressElement = document.createElement('progress'),
+            statusElement = document.createElement('span');
+
+        // <strong>
+        var label = backgroundFetchRegistration[idFld];
+        if (counter > 1)
+          label += ' (' + counter + ')';
+
+        labelElement.innerText = label;
+
+        progressState.push(backgroundFetchRegistration[idFld]);
+
+        // <progress>
+        function updateProgress() {
+          var downloadTotal = backgroundFetchRegistration.downloadTotal ||
+                              backgroundFetchRegistration.totalDownloadSize || 0;
+          if (downloadTotal) {
+            progressElement.max = downloadTotal;
+            progressElement.value = backgroundFetchRegistration.downloaded || 0;
+          }
+        }
+
+        updateProgress();
+
+        // <span>
+        function updateStatus() {
+          var downloaded = backgroundFetchRegistration.downloaded;
+          var downloadTotal = backgroundFetchRegistration.downloadTotal ||
+                              backgroundFetchRegistration.totalDownloadSize || 0;
+
+          if (downloaded && downloadTotal) {
+            var percentage = Math.ceil((downloaded / downloadTotal) * 100);
+
+            statusElement.innerText  = downloaded + ' / ' + downloadTotal;
+            statusElement.innerText += ' (' + percentage + '%)';
+          } else if (downloaded) {
+            statusElement.innerText = downloaded;
+          } else {
+            statusElement.className = 'red';
+            statusElement.innerText = 'unknown progress';
+          }
+        }
+
+        updateStatus();
+
+        listElement.appendChild(labelElement);
+        listElement.appendChild(progressElement);
+        listElement.appendChild(statusElement);
+
+        progressList.appendChild(listElement);
+
+        if ('addEventListener' in backgroundFetchRegistration) {
+          backgroundFetchRegistration.addEventListener('progress', () => {
+            updateProgress();
+            updateStatus();
+          });
+        }
+      }
 
       navigator.serviceWorker.register('background-fetch-content-sw.js', { scope: location.pathname })
         .then(registration => navigator.serviceWorker.ready)
         .then(registration => {
+          var idFn = BackgroundFetchManager.prototype.hasOwnProperty('getIds') ? 'getIds' : 'getTags';
+
+          // Observe progress for all existing registrations.
+          registration.backgroundFetch[idFn]()
+            .then(ids => Promise.all(ids.map(id => registration.backgroundFetch.get(id))))
+            .then(regs => regs.map(reg => observeProgress(reg)));
+
           startButton.addEventListener('click', () => {
             var id = 'my-fetch';
             var requests = [
@@ -86,14 +186,13 @@
               downloadTotal += 17905;
             }
 
-            if (downloadTotal.checked) {
+            if (downloadTotalOpt.checked) {
               options.totalDownloadSize = downloadTotal; // <M62;
               options.downloadTotal = downloadTotal;
             }
 
             var promise = Promise.resolve();
             if (abort.checked) {
-              var idFn = BackgroundFetchManager.prototype.hasOwnProperty('getIds') ? 'getIds' : 'getTags';
               promise = registration.backgroundFetch[idFn]()
                 .then(ids => Promise.all(ids.map(id => registration.backgroundFetch.get(id))))
                 .then(regs => Promise.all(regs.map(reg => reg.abort())));
@@ -103,6 +202,7 @@
               registration.backgroundFetch.fetch(id, requests, options)
                 .then(backgroundFetchRegistration => {
                   console.log('Registered the Background Fetch', backgroundFetchRegistration);
+                  observeProgress(backgroundFetchRegistration);
                 });
               });
           });
