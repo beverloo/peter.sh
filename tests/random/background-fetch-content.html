@@ -43,6 +43,17 @@
       #progress span { color: #333; }
       #progress span.red { color: red; }
 
+      #progress span.abort {
+        background-color: rgba(255, 0, 0, .2);
+        border-radius: 4px;
+        font-weight: normal;
+        font-style: normal;
+        color: red;
+        cursor: pointer;
+        padding: 0 4px;
+        margin-left: 4px;
+      }
+
       progress { margin: 0 8px; }
     </style>
   </head>
@@ -105,6 +116,22 @@
           label += ' (' + counter + ')';
 
         labelElement.innerText = label;
+
+        // <span> for abort
+        var abort = document.createElement('span');
+        abort.className = 'abort';
+        abort.innerText = '×';
+
+        abort.addEventListener('click', event => {
+          backgroundFetchRegistration.abort().then(success => {
+            if (success)
+              abort.innerText = 'aborted';
+            else
+              abort.innerText = 'failed';
+          });
+        });
+
+        labelElement.appendChild(abort);
 
         progressState.push(backgroundFetchRegistration[idFld]);
 
