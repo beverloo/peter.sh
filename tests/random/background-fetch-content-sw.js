@@ -71,13 +71,24 @@ function handleBackgroundFetchEvent(eventName, event) {
     }));
   });
 
+  var id = event.id || event.tag;
+
   // Distribute the |results| to all controlled window |clients|.
   event.waitUntil(Promise.all(promii).then(results => {
     clients.matchAll({ type: 'window' })
-      .then(clients => clients.forEach(client => client.postMessage({ eventName, results })));
+      .then(clients => clients.forEach(client => client.postMessage({ eventName, id, results })));
   }));
 
 }
 
 self.addEventListener('backgroundfetched', handleBackgroundFetchEvent.bind(null, 'backgroundfetched'));
 self.addEventListener('backgroundfetchfail', handleBackgroundFetchEvent.bind(null, 'backgroundfetchfail'));
+
+self.addEventListener('backgroundfetchabort', event => {
+  var eventName = 'backgroundfetchabort';
+  var id = event.id || event.tag;
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window' })
+      .then(clients => clients.forEach(client => client.postMessage({ eventName, id }))));
+});
