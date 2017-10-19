@@ -55,6 +55,12 @@
       }
 
       progress { margin: 0 8px; }
+
+      #result-name.backgroundfetched { color: green; }
+      #result-name.backgroundfetched::after { content: ' ✓'; }
+
+      #result-name.backgroundfetchfail { color: red; }
+      #result-name.backgroundfetchfail::after { content: ' ❌'; }
     </style>
   </head>
   <body>
@@ -72,6 +78,7 @@
           <option>60</option>
           <option>120</option>
         </select> seconds</label>
+      <label for="cross-origin"><input type="checkbox" id="cross-origin" /> Include a non-safe cross-origin request
     </fieldset>
     <fieldset id="progress">
       <h1>Progress</h1>
@@ -87,7 +94,8 @@
           title = document.getElementById('title'),
           downloadTotalOpt = document.getElementById('download-total'),
           delay = document.getElementById('delay'),
-          delaySeconds = document.getElementById('delay-seconds');
+          delaySeconds = document.getElementById('delay-seconds'),
+          crossOrigin = document.getElementById('cross-origin');
 
       var progressContainer = document.getElementById('progress'),
           progressList = document.getElementById('progress-list'),
@@ -197,16 +205,19 @@
             var requests = [
               '/resources/icons/15.jpg',  // cat, 17644 bytes
               '/resources/random-cat-joke.php',  // text, 127 bytes through padding
-              'https://static.peter.sh/images/play-blue.png',  // CORS not allowed, 1242 bytes
               'https://static.peter.sh/cors/1.png',  // CORS and allowed, 14093 bytes
             ];
 
             var options = {};
-            var downloadTotal = 17644 /* 15.png */ + 127 /* cat joke */ + 1242 /* play-blue.png */ +
-                                14093 /* 1.png */;
+            var downloadTotal = 17644 /* 15.png */ + 127 /* cat joke */ + 14093 /* 1.png */;
 
             if (title.checked)
               options.title = 'Aelurophile starter kit';
+
+            if (crossOrigin.checked) {
+              requests.push('https://static.peter.sh/images/play-blue.png'); // CORS not allowed, 1242 bytes
+              downloadTotal += 1242;
+            }
 
             if (delay.checked) {
               requests.push('/resources/slow-cat-icon-response.php?delay=' + delaySeconds.value);  // 17905 bytes
@@ -243,6 +254,7 @@
       navigator.serviceWorker.addEventListener('message', event => {
         resultList.innerHTML = '';  // clear previous results
         resultName.innerText = event.data.eventName;
+        resultName.className = event.data.eventName;
 
         event.data.results.forEach(result => {
           var listItem = document.createElement('li'),
