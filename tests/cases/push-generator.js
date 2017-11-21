@@ -300,6 +300,7 @@ function RequestGenerator() {}
 
 // Prefix to the subscription Id for non-Web Push Protocol subscriptions created by Chrome.
 RequestGenerator.GCM_ENDPOINT_PREFIX = 'https://android.googleapis.com/gcm/send/';
+RequestGenerator.FCM_ENDPOINT_PREFIX = 'https://fcm.googleapis.com/fcm/send/';
 
 // Private API key associated with the sender Id in the manifest ("627634631355").
 RequestGenerator.GCM_API_KEY = 'AIzaSyDR_72jXd9RJKrSyGcuZvn_gCi9-HSeCrM';
@@ -443,10 +444,13 @@ RequestGenerator.prototype.determineSubscriptionEndpoint = function(endpoint, pr
   if (window.endpointOverride)
     return window.endpointOverride;
 
+  var subscriptionId = this.extractSubscriptionId(endpoint);
+  if (endpoint.startsWith(RequestGenerator.FCM_ENDPOINT_PREFIX) && protocol == 'web-push2')
+    return 'https://fcm.googleapis.com/wp/' + subscriptionId;
+
   if (!endpoint.startsWith(RequestGenerator.GCM_ENDPOINT_PREFIX))
     return endpoint;
 
-  var subscriptionId = this.extractSubscriptionId(endpoint);
   switch (protocol) {
     case 'web-push':
       return 'https://jmt17.google.com/gcm/demo-webpush-00/' + subscriptionId;
