@@ -81,7 +81,8 @@
           <option>60</option>
           <option>120</option>
         </select> seconds</label>
-      <label for="cross-origin"><input type="checkbox" id="cross-origin" /> Include a non-safe cross-origin request
+      <label for="cross-origin"><input type="checkbox" id="cross-origin" /> Include a non-safe cross-origin request</label>
+      <label for="icons"><input type="checkbox" id="icons" checked /> Provide icons. </label>
     </fieldset>
     <input type="button" id="start-fetch" value="Start a background fetch..." disabled />
     <fieldset id="progress">
@@ -99,7 +100,8 @@
           downloadTotalOpt = document.getElementById('download-total'),
           delay = document.getElementById('delay'),
           delaySeconds = document.getElementById('delay-seconds'),
-          crossOrigin = document.getElementById('cross-origin');
+          crossOrigin = document.getElementById('cross-origin'),
+          icons = document.getElementById('icons');
 
       var progressContainer = document.getElementById('progress'),
           progressList = document.getElementById('progress-list'),
@@ -258,6 +260,15 @@
             if (downloadTotalOpt.checked) {
               options.totalDownloadSize = downloadTotal; // <M62;
               options.downloadTotal = downloadTotal;
+            }
+
+            if (icons.checked) {
+              options.icons = [];
+              options.icons.push({
+                "src": "/resources/icons/17.png",
+                "sizes": "32x32",
+                "type": "image/png"
+              });
             }
 
             var promise = Promise.resolve();
