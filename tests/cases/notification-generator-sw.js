@@ -54,6 +54,9 @@ self.addEventListener('notificationclick', function(event) {
       var message = 'Clicked on "' + notification.title + '"';
       if (event.action)
         message += ' (action "' + event.action + '")';
+      if (event.reply) {
+        message += '\nUser replied: "' + event.reply + '"';
+      }
 
       client.postMessage(message);
     });
