@@ -1,9 +1,28 @@
-      <style>
-        
-      </style>
-      <script src="/cases/common.js"></script>
-      <script src="/cases/webcrypto-push-encryption.js"></script>
-      <script src="/cases/push-encryption-verifier.js"></script>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Push Encryption Verifier | Peter.sh</title>
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,700,400italic" />
+    <link rel="stylesheet" href="//static.peter.sh/style/layout.css" />
+    <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/mobile.css" media="screen and (max-device-width: 767px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
+    <link rel="stylesheet" href="/resources/style.css" />
+  </head>
+  <body class="green">
+    <header>
+      <div class="header-overlay"></div>
+      <h1>
+        Push Encryption Verifier
+        <a class="twitter" href="https://twitter.com/beverloo"></a>
+      </h1>
+    </header>
+    <section>
+      <script src="/resources/generator_base.js"></script>
+      <script src="/resources/webcrypto_push_encryption.js"></script>
+      <script src="/push-encryption-verifier/verifier.js"></script>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
           var requirementsElement = document.getElementById('requirements'),
@@ -61,7 +80,7 @@
             <input type="text" id="sender_public" placeholder="Sender's public key" value="BG3OGHrl3YJ5PHpl0GSqtAAlUPnx1LvwQvFMIc68vhJU6nIkRzPEqtCduQz8wQj0r71NVPzr7ZRk2f-fhsQ5pK8" />
           </li>
           <li class="no-label">
-          	<input type="text" id="sender_private" placeholder="Sender's private key" value="Dt1CLgQlkiaA-tmCkATyKZeoF1-Gtw1-gdEP6pOCqj4" />
+            <input type="text" id="sender_private" placeholder="Sender's private key" value="Dt1CLgQlkiaA-tmCkATyKZeoF1-Gtw1-gdEP6pOCqj4" />
           </li>
           <li>
             <label for="receiver_public">Receiver key</label>
@@ -159,3 +178,14 @@
           API subscription.
         </p>
       </div>
+    </section>
+    <footer>
+      Curated by <a href="https://peter.sh/">Peter Beverloo</a>. This page lives in the
+      <a href="https://creativecommons.org/publicdomain/zero/1.0/">public domain</a>.
+      <aside>
+        <a href="https://github.com/beverloo/peter.sh/tree/master/tests">source code</a>
+      </aside>
+    </footer>
+    <script src="/resources/common.js" async></script>
+  </body>
+</html>

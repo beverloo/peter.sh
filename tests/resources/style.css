@@ -87,3 +87,10 @@
   font-family: monospace;
   white-space: pre-wrap;
 }
+
+h2 { text-indent: 0; }
+
+ol.subtasks p a {
+  text-decoration: underline;
+  color: #999999;
+}

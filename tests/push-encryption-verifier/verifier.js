@@ -91,7 +91,7 @@ PushEncryptionVerifier.prototype.update = function() {
 
   var element = this.element_;
   Promise.all([ senderKeys, receiverKeys ]).then(function(keys) {
-    var cryptographer = new WebPushCryptographer(keys[0], keys[1], decodedInput.authSecret);
+    var cryptographer = new WebPushCryptographerDraft08(keys[0], keys[1], decodedInput.authSecret);
     var salt = decodedInput.salt;
 
     cryptographer.deriveEncryptionKeys(salt).then(function(keys) {

@@ -3,8 +3,7 @@
 // be found in the LICENSE file.
 
 function NotificationGenerator(requirementsElement, element) {
-  NotificationGeneratorBase.call(
-      this, requirementsElement, element, 'notification-generator-sw.js');
+  NotificationGeneratorBase.call(this, requirementsElement, element);
 }
 
 NotificationGenerator.prototype = Object.create(NotificationGeneratorBase.prototype);
