@@ -8,6 +8,7 @@
       "density": 1.0
     }
   ],
-  "start_url": "/push-generator/",
+  "gcm_sender_id": "627634631355",
+  "start_url": "/push-message-generator/",
   "display": "standalone"
 }

@@ -21,7 +21,7 @@ function toBase64Url(arrayBuffer, start, end) {
 function SubscriptionGenerator() {}
 
 // Manifest that contains the 'gcm_sender_id' property for GCM authentication.
-SubscriptionGenerator.MANIFEST_FILE = '/push-generator/push-generator-gcm-manifest.json';
+SubscriptionGenerator.MANIFEST_FILE = '/push-message-generator/manifest_gcm.json';
 
 // Public NIST P-256 key in uncompressed format. Must be paired with the private key.
 SubscriptionGenerator.PUBLIC_KEY = [
@@ -632,8 +632,7 @@ RequestGenerator.prototype.amendHeadersForEncryptionFailure = function(encryptio
 // -------------------------------------------------------------------------------------------------
 
 function PushGenerator(requirementsElement, element) {
-  NotificationGeneratorBase.call(
-      this, requirementsElement, element, 'push-generator-sw.js');
+  NotificationGeneratorBase.call(this, requirementsElement, element);
 
   // The generator assumes that the user's browser supports subscription payloads.
   if (!PushSubscription.prototype.hasOwnProperty('getKey')) {

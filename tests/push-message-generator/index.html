@@ -1,9 +1,30 @@
-      <style>
-
-      </style>
-      <script src="/cases/common.js"></script>
-      <script src="/cases/webcrypto-push-encryption.js"></script>
-      <script src="/cases/push-generator.js"></script>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Push Message Generator | Peter.sh</title>
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,700,400italic" />
+    <link rel="stylesheet" href="//static.peter.sh/style/layout.css" />
+    <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/mobile.css" media="screen and (max-device-width: 767px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
+    <link rel="stylesheet" href="/resources/style.css" />
+    <link rel="manifest" href="/push-message-generator/manifest.json"/>
+  </head>
+  <body class="green">
+    <header>
+      <div class="header-overlay"></div>
+      <h1>
+        Push Message Generator
+        <a class="twitter" href="https://twitter.com/beverloo"></a>
+      </h1>
+    </header>
+    <section>
+      <script src="/resources/generator_base.js"></script>
+      <script src="/resources/webcrypto_push_encryption.js"></script>
+      <script src="/notification-generator/notification_generator_base.js"></script>
+      <script src="/push-message-generator/push_generator.js"></script>
       <script>
         document.addEventListener('DOMContentLoaded', function() {
           var requirementsElement = document.getElementById('requirements'),
@@ -34,7 +55,7 @@
               /* send */        document.getElementById('action-send'),
               /* display-msg */ document.getElementById('action-display-msg'));
 
-          generator.registerServiceWorker(location.pathname);
+          generator.registerServiceWorker('/push-message-generator/');
           generator.requestPermission();
         });
       </script>
@@ -152,3 +173,14 @@
         <p id="body">[undefined]</p>
         <p id="request" class="curl no-display">[undefined]</p>
       </div>
+    </section>
+    <footer>
+      Curated by <a href="https://peter.sh/">Peter Beverloo</a>. This page lives in the
+      <a href="https://creativecommons.org/publicdomain/zero/1.0/">public domain</a>.
+      <aside>
+        <a href="https://github.com/beverloo/peter.sh/tree/master/tests">source code</a>
+      </aside>
+    </footer>
+    <script src="/resources/common.js" async></script>
+  </body>
+</html>
