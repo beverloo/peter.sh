@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Background Fetch Generator | Peter.sh</title>
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,700,400italic" />
+    <link rel="stylesheet" href="//static.peter.sh/style/layout.css" />
+    <link rel="stylesheet" href="//static.peter.sh/style/desktop.css" media="screen and (min-device-width: 768px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/mobile.css" media="screen and (max-device-width: 767px)" />
+    <link rel="stylesheet" href="//static.peter.sh/style/s-services.css" />
+    <link rel="stylesheet" href="/resources/style.css" />
+  </head>
+  <body class="green">
+    <header>
+      <div class="header-overlay"></div>
+      <h1>
+        Background Fetch Generator
+        <a class="twitter" href="https://twitter.com/beverloo"></a>
+      </h1>
+    </header>
+    <section>
+      <script src="/resources/generator_base.js"></script>
+      <script src="/notification-generator/notification_generator_base.js"></script>
+      <script src="/background-fetch-generator/background_fetch_generator.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var requirementsElement = document.getElementById('requirements'),
+              element = document.getElementById('test-case');
+
+          var generator = new BackgroundFetchGenerator(requirementsElement, element);
+
+          generator.registerServiceWorker('/background-fetch-generator/');
+          generator.requestPermission();
+        });
+      </script>
+      <div id="test-case" class="test-case">
+        <ul id="requirements" class="requirements">
+          <li>Unable to execute the JavaScript code.</li>
+        </ul>
+        <p>
+          Nothing to see here yet..
+        </p>
+      </div>
+    </section>
+    <footer>
+      Curated by <a href="https://peter.sh/">Peter Beverloo</a>. This page lives in the
+      <a href="https://creativecommons.org/publicdomain/zero/1.0/">public domain</a>.
+      <aside>
+        <a href="https://github.com/beverloo/peter.sh/tree/master/tests">source code</a>
+      </aside>
+    </footer>
+    <script src="/resources/common.js" async></script>
+  </body>
+</html>
