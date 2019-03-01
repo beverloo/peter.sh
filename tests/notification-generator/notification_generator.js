@@ -32,6 +32,7 @@ NotificationGenerator.prototype.createNotificationOptions = function(state) {
     requireInteraction: this.getField(state, 'requireInteraction', false),
     sticky: this.getField(state, 'sticky', false),
     notificationCloseEvent: this.getField(state, 'notificationCloseEvent', false),
+    showTrigger: this.getField(state, 'showTrigger', undefined),
 
     data: {
       options: {
