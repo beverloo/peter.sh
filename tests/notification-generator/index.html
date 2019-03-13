@@ -61,6 +61,7 @@
                                  GeneratorBase.FIELD_TYPE_BOOL],
             notificationCloseEvent: ['notification_close_event',
                                  GeneratorBase.FIELD_TYPE_BOOL],
+            showTrigger: ['show_trigger', GeneratorBase.FIELD_TYPE_TRIGGER],
 
             // Reaction settings
             action: ['action', GeneratorBase.FIELD_TYPE_STRING],
@@ -96,6 +97,13 @@
           navigator.serviceWorker.addEventListener('message', function(message) {
             alert(message.data);
           });
+
+          // Check if show triggers are supported by this browser.
+          if (!Notification.prototype.hasOwnProperty('showTrigger')) {
+            var showTriggerSelect = document.getElementById('show_trigger');
+            showTriggerSelect.disabled = true;
+            showTriggerSelect.title = 'Not supported by this browser.';
+          }
 
           generator.registerServiceWorker('/notification-generator/');
           generator.requestPermission();
@@ -259,6 +267,16 @@
            <li>
             <label for="notification_close_event" not-implemented title="Not implemented by Firefox.">notificationclose event</label>
             <input type="checkbox" id="notification_close_event" />
+          </li>
+          <li>
+            <label for="show_trigger" not-implemented title="Not yet standardized. Proposed at https://github.com/beverloo/notification-triggers">Show Trigger</label>
+            <select id="show_trigger">
+              <option data-id="0" value="">No show trigger</option>
+              <option data-id="1" value="5000">Five seconds from now</option>
+              <option data-id="2" value="60000">One minute from now</option>
+              <option data-custom value="custom">Custom</option>
+            </select>
+            <input id="show_trigger_custom" type="text" />
           </li>
         </ol>
 
