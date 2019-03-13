@@ -172,6 +172,7 @@ GeneratorBase.FIELD_TYPE_BOOL = 1;
 GeneratorBase.FIELD_TYPE_ARRAY = 2;
 GeneratorBase.FIELD_TYPE_BUTTONS = 3;
 GeneratorBase.FIELD_TYPE_TIME_OFFSET = 4;
+GeneratorBase.FIELD_TYPE_TRIGGER = 5;
 
 GeneratorBase.SEPARATOR_FIELD = ';;';
 GeneratorBase.SEPARATOR_VALUE = '=';
@@ -330,6 +331,15 @@ GeneratorBase.prototype.getField = function(state, name, defaultValue) {
       return !!state[name].value;
     case GeneratorBase.FIELD_TYPE_STRING:
       return state[name].value;
+    case GeneratorBase.FIELD_TYPE_TRIGGER:
+      if (!state[name].value.length)
+        return defaultValue;
+
+        // We only support TimestampTrigger for now.
+      var currentTime = Date.now(),
+          givenTime = parseInt(state[name].value);
+
+      return new TimestampTrigger(currentTime + givenTime);
   }
 
   // This should never be reached, as the switch() handles all cases.
