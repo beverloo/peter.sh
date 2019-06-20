@@ -82,16 +82,15 @@
             if (emailsOption.checked) properties.push('email');
             if (telephoneOption.checked) properties.push('tel');
 
-            navigator.contacts.select({
-              multiple: multiple,
-              properties: properties
-            }).then(results => {
-              resultElement.classList.add('success');
-              resultElement.innerHTML = buildResults(results);
-            }).catch(exception => {
-              resultElement.classList.add('exception');
-              resultElement.innerText = exception.toString();
-            });
+            navigator.contacts.select(properties, {multiple})
+                .then(results => {
+                  resultElement.classList.add('success');
+                  resultElement.innerHTML = buildResults(results);
+                })
+                .catch(exception => {
+                  resultElement.classList.add('exception');
+                  resultElement.innerText = exception.toString();
+                });
           });
 
           requestButton.disabled = false;
