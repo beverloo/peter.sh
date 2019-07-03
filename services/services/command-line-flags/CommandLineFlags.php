@@ -2,7 +2,9 @@
 // Copyright 2014 Peter Beverloo. All rights reserved.
 // Use of this source code is governed by the MIT license, a copy of which can
 // be found in the LICENSE file.
-
+//Shago7932/Master
+Code of conduct 
+Report transparency
 class CommandLineFlags extends Service {
     // Registers the task which will be used for updating the command line flags
     // available in the Chromium repository.
