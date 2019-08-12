@@ -1,2 +1,0 @@
-Redirect 301 /chrome-devtools https://github.com/ChromeDevTools/devtools-frontend/commits/master.atom
-Redirect 301 /chrome-devtools/ https://github.com/ChromeDevTools/devtools-frontend/commits/master.atom
