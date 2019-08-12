@@ -10,6 +10,8 @@ class CSSProperties extends Service {
     // Registers the task using which we'll poll for new CSS properties in WebKit,
     // Blink and Gecko. Trident will (still) have to be updated manually.
     public static function RegisterTasks(ServiceManager $manager) {
+        return;  // TODO: FIXME
+
         $manager->scheduleTask('24 hours', array(__CLASS__, 'updateProperties'));
         $manager->scheduleTask('24 hours', array(__CLASS__, 'sendDailyOverview'));
     }
