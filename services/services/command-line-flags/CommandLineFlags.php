@@ -7,8 +7,7 @@ class CommandLineFlags extends Service {
     // Registers the task which will be used for updating the command line flags
     // available in the Chromium repository.
     public static function RegisterTasks(ServiceManager $manager) {
-        $manager->scheduleTask('3 hours', array(__CLASS__, 'updateFlags'));
-        $manager->scheduleTask('24 hours', array(__CLASS__, 'sendDailyOverview'));
+        $manager->scheduleTask('24 hours', array(__CLASS__, 'updateFlags'));
     }
 
     // Returns the current status of the command line flag tracking service.
@@ -67,74 +66,6 @@ class CommandLineFlags extends Service {
 
     // Pre-processor directives which are currently active in the source file.
     private $m_preProcessorStack;
-
-    // Sends a daily overview e-mail to a mailing list of added, updated and removed
-    // switches in Chromium's source code.
-    public function sendDailyOverview() {
-        $since = time() - $this->interval;
-        $sinceDate = date('Y-m-d H:i:s', $since);
-
-        $result = $this->database()->query('
-            SELECT
-                chromium_switches.switch_id,
-                chromium_switches.switch_name,
-                chromium_switches.switch_description,
-                UNIX_TIMESTAMP(chromium_switches.added) AS added,
-                UNIX_TIMESTAMP(chromium_switches.updated) AS updated,
-                UNIX_TIMESTAMP(chromium_switches.removed) AS removed
-            FROM
-                chromium_switches
-            WHERE
-                chromium_switches.added >= "' . $sinceDate . '" OR
-                chromium_switches.updated >= "' . $sinceDate . '" OR
-                (chromium_switches.removed IS NOT NULL AND
-                 chromium_switches.removed >= "' . $sinceDate . '")
-            ORDER BY
-                chromium_switches.switch_name ASC');
-
-        if ($result === false) {
-            Error('CommandLineFlags: Unable to retrieve database list for daily overview e-mail.');
-            return;
-        }
-
-        $switches = array('added' => array(), 'updated' => array(), 'removed' => array());
-        $updates = 0;
-
-        while ($switch = $result->fetch_assoc()) {
-            $reason = 'added';
-            if ($switch['updated'] >= $since)
-                $reason = 'updated';
-            else if ($switch['removed'] >= $since)
-                $reason = 'removed';
-
-            $switches[$reason][] = $switch;
-            $updates++;
-        }
-
-        if ($updates == 0)
-            return;
-
-        $message = $this->loadMessage($switches, $updates);
-        $subject = 'Chromium Command Line Updates for ' . date('Y-m-d');
-        $headers = array(
-            'From: Peter Beverloo <peter@lvp-media.com>',
-            'Reply-To: Peter Beverloo <peter@lvp-media.com>',
-            'Return-Path: Peter Beverloo <peter@lvp-media.com>',
-            'Content-Type: text/html'
-        );
-
-        mail(Configuration::$commandLineUpdateAddress, $subject, $message, implode("\r\n", $headers));
-    }
-
-    // Loads the message to send to the list from message.html, having only |$switches| and
-    // |$updates| available in the local scope. The message will be evaluated as PHP.
-    private function loadMessage($switches, $updates) {
-        $url = 'http://peter.sh/experiments/chromium-command-line-switches/';
-
-        ob_start();
-        include __DIR__ . '/message.html';
-        return ob_get_clean();
-    }
 
     // Updates the command line flags available in Chromium. We retrieve a list of
     // all the switch files from the Git repository hosted on Nishino, then attempt to
