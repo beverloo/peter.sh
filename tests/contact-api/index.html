@@ -47,13 +47,14 @@
             output += buildResult('name', result.name);
             output += buildResult('email', result.email);
             output += buildResult('tel', result.tel);
+            output += buildResult('address', result.address);
             output += '<br />';
           });
 
           return output;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
           var requirementsElement = document.getElementById('requirements');
 
           if (!window.ContactsManager)
@@ -63,9 +64,21 @@
 
           var requestButton = document.getElementById('request-button');
           var multipleOption = document.getElementById('multiple'),
-              namesOption = document.getElementById('names'),
-              emailsOption = document.getElementById('emails'),
-              telephoneOption = document.getElementById('telephone');
+              namesOption = document.getElementById('name'),
+              emailsOption = document.getElementById('email'),
+              telephoneOption = document.getElementById('tel'),
+              addressOption = document.getElementById('address');
+
+          var supportedProperties = ['name', 'email', 'tel'];
+          if (navigator.contacts.getProperties)
+            supportedProperties = await navigator.contacts.getProperties();
+          
+          supportedProperties.forEach(id => {
+            var element = document.getElementById(id);
+            if (!element) return;
+            element.disabled = false;
+            element.checked = true;
+          });
 
           var resultElement = document.getElementById('results');
 
@@ -82,6 +95,7 @@
             if (namesOption.checked) properties.push('name');
             if (emailsOption.checked) properties.push('email');
             if (telephoneOption.checked) properties.push('tel');
+            if (telephoneOption.checked) properties.push('address');
 
             navigator.contacts.select(properties, {multiple})
                 .then(results => {
@@ -117,15 +131,19 @@
           </li>
           <li>
             <label for="names">Include names?</label>
-            <input type="checkbox" checked id="names" />
+            <input type="checkbox" disabled id="name" />
           </li>
           <li>
             <label for="emails">Include e-mail addresses?</label>
-            <input type="checkbox" checked id="emails" />
+            <input type="checkbox" disabled id="email" />
           </li>
           <li>
-            <label for="telephone">Include phone numbers?</label>
-            <input type="checkbox" checked id="telephone" />
+            <label for="tel">Include phone numbers?</label>
+            <input type="checkbox" disabled id="tel" />
+          </li>
+          <li>
+            <label for="address">Include addresses?</label>
+            <input type="checkbox" disabled id="address" />
           </li>
         </ol>
         <p>
