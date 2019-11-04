@@ -19,6 +19,9 @@
       #results.undefined { color: #ccc; font-style: italic }
       #results.exception { color: red; }
       #results.success { color: green; }
+
+      .icons-container { padding: 5px; }
+
     </style>
   </head>
   <body class="green">
@@ -32,23 +35,60 @@
     <section>
       <script>
         function buildResult(label, result) {
-          if (result === undefined)
-            return '';
+          const output = document.createElement('div');
+          if (!result)
+            return output;
 
-          return '<b>' + label + '</b>: ' + JSON.stringify(result) + '<br />';
+          output.innerHTML = '<b>' + label + '</b>: ' + JSON.stringify(result) + '<br />';
+          return output;
+        }
+
+        function buildIcons(icons) {
+          const div = document.createElement('div');
+
+          if (!icons) return div;
+          
+          const textDiv = document.createElement('div');
+          textDiv.style.display = 'inline-block';
+          textDiv.innerHTML = '<b>Icons</b>:';
+          div.appendChild(textDiv);
+
+          if (!icons.length) {
+            textDiv.innerHTML += ' []';
+          }
+  
+          for (const icon of icons) {
+            const url = URL.createObjectURL(icon);
+            const imgContainer = document.createElement('img');
+            imgContainer.onload = () => URL.revokeObjectURL(url);
+            imgContainer.src = url;
+            
+            const innerDiv = document.createElement('div');
+            innerDiv.style.display = 'inline-block';
+            innerDiv.className = 'icons-container';
+            innerDiv.appendChild(imgContainer);
+
+            div.appendChild(innerDiv);
+          }
+          
+          return div;
         }
 
         function buildResults(results) {
-          if (!results.length)
-            return '<i>No contacts were selected</i>';
+          if (!results.length) {
+            const i = document.createElement('i');
+            i.textContent = 'No contacts were selected';
+            return i;
+          }
           
-          var output = '';
+          const output = document.createElement('div');
           results.forEach(function (result) {
-            output += buildResult('name', result.name);
-            output += buildResult('email', result.email);
-            output += buildResult('tel', result.tel);
-            output += buildResult('address', result.address);
-            output += '<br />';
+            output.appendChild(buildResult('name', result.name));
+            output.appendChild(buildResult('email', result.email));
+            output.appendChild(buildResult('tel', result.tel));
+            output.appendChild(buildResult('address', result.address));
+            output.appendChild(buildIcons(result.icon));
+            output.innerHTML += '<br><hr>';
           });
 
           return output;
@@ -67,7 +107,8 @@
               namesOption = document.getElementById('name'),
               emailsOption = document.getElementById('email'),
               telephoneOption = document.getElementById('tel'),
-              addressOption = document.getElementById('address');
+              addressOption = document.getElementById('address'),
+              iconOption = document.getElementById('icon');
 
           var supportedProperties = ['name', 'email', 'tel'];
           if (navigator.contacts.getProperties)
@@ -96,11 +137,13 @@
             if (emailsOption.checked) properties.push('email');
             if (telephoneOption.checked) properties.push('tel');
             if (addressOption.checked) properties.push('address');
+            if (iconOption.checked) properties.push('icon');
 
             navigator.contacts.select(properties, {multiple})
                 .then(results => {
                   resultElement.classList.add('success');
-                  resultElement.innerHTML = buildResults(results);
+                  resultElement.innerHTML = '';
+                  resultElement.appendChild(buildResults(results));
                 })
                 .catch(exception => {
                   resultElement.classList.add('exception');
@@ -144,6 +187,10 @@
           <li>
             <label for="address">Include addresses?</label>
             <input type="checkbox" disabled id="address" />
+          </li>
+          <li>
+            <label for="address">Include icons?</label>
+            <input type="checkbox" disabled id="icon" />
           </li>
         </ol>
         <p>
