@@ -95,7 +95,7 @@
             if (namesOption.checked) properties.push('name');
             if (emailsOption.checked) properties.push('email');
             if (telephoneOption.checked) properties.push('tel');
-            if (telephoneOption.checked) properties.push('address');
+            if (addressOption.checked) properties.push('address');
 
             navigator.contacts.select(properties, {multiple})
                 .then(results => {
