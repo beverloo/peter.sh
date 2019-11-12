@@ -48,6 +48,9 @@ self.addEventListener('notificationclick', function(event) {
   //    'open-only'    Do not try to find existing windows, always open a new
   //                   window for the given URL.
   //
+  //    'open-only-*'  Always open a new window for a given URL, which is a
+  //                   non-HTTP/HTTPS protocol link.
+  //
 
   if (options.action == 'message') {
     firstWindowClient().then(function(client) {
@@ -70,6 +73,10 @@ self.addEventListener('notificationclick', function(event) {
     if (options.action == 'default') {
       promise = promise.catch(function() { clients.openWindow(options.url); });
     }
+  } else if (options.action == 'open-only-tel') {
+    promise = promise.then(function() { clients.openWindow('tel:+12025550108'); });
+  } else if (options.action == 'open-only-mailto') {
+    promise = promise.then(function() { clients.openWindow('mailto:fake@example.com'); });
   } else if (options.action == 'open-only') {
     promise = promise.then(function() { clients.openWindow(options.url); });
   }
