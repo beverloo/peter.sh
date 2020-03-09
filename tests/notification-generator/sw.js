@@ -55,7 +55,7 @@ self.addEventListener('notificationclick', function(event) {
   if (options.action == 'message') {
     firstWindowClient().then(function(client) {
       var message = 'Clicked on "' + notification.title + '"';
-      if (event.action) {
+      if (event.action || event.reply) {
         message += ' (action: "' + event.action + '", reply: ';
         message += event.reply === null ? 'null' : '"' + event.reply + '"';
         message += ')';
