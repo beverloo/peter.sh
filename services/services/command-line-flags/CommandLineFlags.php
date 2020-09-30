@@ -53,7 +53,7 @@ class CommandLineFlags extends Service {
                 array(
                     'name'  => 'Indexed command-line switches',
                     'date'  => $last_update,
-                    'value' => '<a href="http://peter.sh/experiments/chromium-command-line-switches/">' . $switches . ' switches, ' . $files . ' files</a>',
+                    'value' => '<a href="https://peter.sh/experiments/chromium-command-line-switches/">' . $switches . ' switches, ' . $files . ' files</a>',
                 )
             )
         );
