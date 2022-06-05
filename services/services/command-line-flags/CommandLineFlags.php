@@ -379,7 +379,7 @@ class CommandLineFlags extends Service {
 
         chdir(Configuration::$chromiumCheckout);
         {
-            $files = preg_split('/\s+/s', shell_exec('git ls-files --with-tree origin/master -x "*switches.cc" --ignored'), 0, PREG_SPLIT_NO_EMPTY);
+            $files = preg_split('/\s+/s', shell_exec('git ls-files --with-tree origin/main -x "*switches.cc" --ignored'), 0, PREG_SPLIT_NO_EMPTY);
             foreach ($files as $filename) {
                 $absolute = Configuration::$chromiumCheckout . '/' . $filename;
                 if (!file_exists($absolute)) {
