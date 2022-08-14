@@ -52,10 +52,14 @@ class ServiceManager {
             }
 
             $this->m_currentService = $name;
-            $name::RegisterTasks($this);
-            $this->m_currentService = null;
 
-            $this->m_services[] = $name;
+            $existingTaskCount = count($this->m_tasks);
+            $name::RegisterTasks($this);
+
+            if (count($this->m_tasks) !== $existingTaskCount)
+                $this->m_services[] = $name;
+
+            $this->m_currentService = null;
         }
     }
 
@@ -170,7 +174,7 @@ class ServiceManager {
             return;
         }
 
-        if (!is_callable($callback)) {
+        if (!method_exists($callback[0], $callback[1])) {
             Warning('Scheduled task for service "' . $this->m_currentService . '" has an invalid callback.');
             return;
         }

@@ -8,8 +8,9 @@ class RepositoryTracker extends Service {
     // fetch the latest changes committed to repositories we care about. We also run a
     // 
     public static function RegisterTasks(ServiceManager $manager) {
-        $manager->scheduleTask('30 minutes', array(__CLASS__, 'updateRepositories'));
-        $manager->scheduleTask('1 day', array(__CLASS__, 'aggregateRepositoryStats'));
+        // no longer used:
+        //$manager->scheduleTask('30 minutes', array(__CLASS__, 'updateRepositories'));
+        //$manager->scheduleTask('1 day', array(__CLASS__, 'aggregateRepositoryStats'));
     }
 
     // Returns the current state of the repository tracker service. Beyond the default
