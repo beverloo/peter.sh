@@ -57,6 +57,11 @@
 
           generator.registerServiceWorker('/push-message-generator/');
           generator.requestPermission();
+
+          var requestButton = document.getElementById('action-request');
+          requestButton.addEventListener('click', function() {
+            generator.requestPermission();
+          });
         });
       </script>
       <div id="test-case" class="test-case">
@@ -89,6 +94,7 @@
         </ol>
 
         <p>
+          <button id="action-request">Request permission</button>
           <button id="action-subscribe">Subscribe</button>
           <button id="action-unsubscribe">Unsubscribe</button> —
           <button id="action-display">Display subscription</button>
