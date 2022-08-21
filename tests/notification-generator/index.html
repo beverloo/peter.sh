@@ -107,6 +107,11 @@
 
           generator.registerServiceWorker('/notification-generator/');
           generator.requestPermission();
+
+          var requestButton = document.getElementById('action-request');
+          requestButton.addEventListener('click', function() {
+            generator.requestPermission();
+          });
         });
       </script>
       <div id="test-case" class="test-case">
@@ -301,6 +306,7 @@
         </ol>
 
         <p>
+          <button id="action-request">Request permission</button>
           <button id="action-reset">Reset</button>
           <button id="action-display">Display the notification</button>
           <button id="action-get-displayed">Get displayed notifications</button>
