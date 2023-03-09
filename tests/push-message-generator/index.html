@@ -56,7 +56,6 @@
               /* display-msg */ document.getElementById('action-display-msg'));
 
           generator.registerServiceWorker('/push-message-generator/');
-          generator.requestPermission();
 
           var requestButton = document.getElementById('action-request');
           requestButton.addEventListener('click', function() {
@@ -67,6 +66,9 @@
       <div id="test-case" class="test-case">
         <ul id="requirements" class="requirements">
           <li>Unable to execute the JavaScript code.</li>
+        </ul>
+        <ul class="notes">
+          <li>On iOS and iPadOS, requires the web app to be added to the home screen.</li>
         </ul>
 
         <h2>Subscription settings</h2>
