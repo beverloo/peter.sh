@@ -6,12 +6,13 @@
 // List of endpoints that can be used by the Push Generator. Please send a PR
 // on GitHub (beverloo/peter.sh) if yours isn't listed.
 $endpointWhitelist = [
-  'https://android.googleapis.com/gcm/send',
-  'https://fcm.googleapis.com/',
-  'https://jmt17.google.com/',
-  'https://updates.push.services.mozilla.com/wpush/v2/',
-  'https://updates.push.services.mozilla.com/push/',
-  'https://updates-autopush.stage.mozaws.net',
+  'android.googleapis.com/gcm/send',
+  'fcm.googleapis.com',
+  'jmt17.google.com',
+  'updates.push.services.mozilla.com',
+  'updates-autopush.stage.mozaws.net',
+  '.push.apple.com',
+  '.notify.windows.com',
 ];
 
 if (file_exists(__DIR__ . '/push.private.php'))
@@ -33,12 +34,13 @@ function toHeaderName($name) {
 function isWhitelisted($endpoint) {
   global $endpointWhitelist;
 
-  $filtered = array_filter($endpointWhitelist, function($entry) use ($endpoint) {
-    return substr($endpoint, 0, strlen($entry)) == $entry ||
-           strpos($endpoint, $entry) !== false;
-  });
+  foreach ($endpointWhitelist as $whitelisted) {
+    if (str_contains($endpoint, $whitelisted)) {
+      return true;
+    }
+  }
 
-  return !!count($filtered);
+  return false;
 }
 
 // -----------------------------------------------------------------------------
