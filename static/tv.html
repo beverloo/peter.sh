@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TV Dashboard light & dark shades</title>
+  </head>
+  <body>
+    <script>
+      const [ min, max ] =
+            document.location.search.includes('light') ? [ 240, 255 ]
+                                                       : [   0,  30 ];
+
+      const componentColor = Math.floor(Math.random() * (max - min) + min);
+      const component = ('0' + componentColor.toString(16)).substr(-2);
+      const color = '#' + component + component + component;
+
+      document.body.style.backgroundColor = color;
+    </script>
+  </body>
+</html>
