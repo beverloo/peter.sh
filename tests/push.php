@@ -13,6 +13,7 @@ $endpointWhitelist = [
   'updates-autopush.stage.mozaws.net',
   '.push.apple.com',
   '.notify.windows.com',
+  'graph.facebook.com/rl_push_send',
 ];
 
 if (file_exists(__DIR__ . '/push.private.php'))
