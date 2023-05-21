@@ -6,14 +6,14 @@
 // List of endpoints that can be used by the Push Generator. Please send a PR
 // on GitHub (beverloo/peter.sh) if yours isn't listed.
 $endpointWhitelist = [
-  'android.googleapis.com/gcm/send',
-  'fcm.googleapis.com',
-  'jmt17.google.com',
-  'updates.push.services.mozilla.com',
-  'updates-autopush.stage.mozaws.net',
+  'https://android.googleapis.com/gcm/send',
+  'https://fcm.googleapis.com',
+  'https://jmt17.google.com',
+  'https://updates.push.services.mozilla.com',
+  'https://updates-autopush.stage.mozaws.net',
+  'https://graph.facebook.com/rl_push_send',
   '.push.apple.com',
   '.notify.windows.com',
-  'graph.facebook.com/rl_push_send',
 ];
 
 if (file_exists(__DIR__ . '/push.private.php'))
