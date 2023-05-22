@@ -5,15 +5,15 @@
 
 // List of endpoints that can be used by the Push Generator. Please send a PR
 // on GitHub (beverloo/peter.sh) if yours isn't listed.
-$endpointWhitelist = [
-  'https://android.googleapis.com/gcm/send',
-  'https://fcm.googleapis.com',
-  'https://jmt17.google.com',
-  'https://updates.push.services.mozilla.com',
-  'https://updates-autopush.stage.mozaws.net',
-  'https://graph.facebook.com/rl_push_send',
-  '.push.apple.com',
-  '.notify.windows.com',
+$endpointPatterns = [
+  '/^https:\/\/android\.googleapis\.com\/gcm\/send.*/',
+  '/^https:\/\/fcm\.googleapis\.com.*/',
+  '/^https:\/\/jmt17\.google\.com.*/',
+  '/^https:\/\/updates\.push\.services\.mozilla\.com.*/',
+  '/^https:\/\/updates-autopush\.stage\.mozaws\.net.*/',
+  '/^https:\/\/graph\.facebook\.com\/rl_push_send.*/',
+  '/^https:\/\/.*\.push\.apple\.com.*/',
+  '/^https:\/\/.*\.notify\.windows\.com.*/',
 ];
 
 if (file_exists(__DIR__ . '/push.private.php'))
@@ -33,10 +33,10 @@ function toHeaderName($name) {
 
 // Determines if the |$endpoint| contains a whitelisted URL.
 function isWhitelisted($endpoint) {
-  global $endpointWhitelist;
+  global $endpointPatterns;
 
-  foreach ($endpointWhitelist as $whitelisted) {
-    if (str_contains($endpoint, $whitelisted)) {
+  foreach ($endpointPatterns as $pattern) {
+    if (preg_match($pattern, $endpoint)) {
       return true;
     }
   }
@@ -58,10 +58,19 @@ $endpoint = $requestHeaders['x-endpoint'];
 $headers = [];
 
 if (!isWhitelisted($endpoint))
-  fatalError('403 Forbidden', 'The endpoint has not been whitelisted. Send a PR?');
+  fatalError(
+    '403 Forbidden',
+    'The endpoint has not been whitelisted. Send a PR to the https://github.com/beverloo/peter.sh/blob/master/tests/push.php file?'
+  );
 
-$optionalHeaders = ['Authorization', 'Content-Encoding', 'Content-Type', 'Crypto-Key', 'Encryption',
-                    'TTL'];
+$optionalHeaders = [
+  'Authorization',
+  'Content-Encoding',
+  'Content-Type',
+  'Crypto-Key',
+  'Encryption',
+  'TTL',
+];
 
 foreach ($optionalHeaders as $headerName) {
   $lowerCaseHeaderName = strtolower($headerName);
