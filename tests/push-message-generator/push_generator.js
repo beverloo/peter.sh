@@ -823,8 +823,8 @@ PushGenerator.prototype.displayMessage = function() {
       curlCommand += ' --data-binary @<(echo ' + toBase64(request.body) + ' | base64 --decode)';
     } else {
       // content-length is needed for the curl request without payload for GCM.
-      curlCommand += ' --header "Content-Length: 0"';      
-    }    
+      curlCommand += ' --header "Content-Length: 0"';
+    }
     content.querySelector('#request').textContent = curlCommand;
 
     document.location.hash =
