@@ -819,13 +819,13 @@ PushGenerator.prototype.displayMessage = function() {
     content.querySelector('#headers').textContent = headers.join('\n');
     content.querySelector('#body').textContent = request.body;
 
-    const isArrayBuffer = request.body instanceof ArrayBuffer;
-    content.querySelector('#request').classList.toggle("no-display", isArrayBuffer);
-    if (!isArrayBuffer) {
-      // content-length is needed for the curl request.
+    if (request.body instanceof ArrayBuffer) {
+      curlCommand += ' --data-binary @<(echo ' + toBase64(request.body) + ' | base64 --decode)';
+    } else {
+      // content-length is needed for the curl request without payload for GCM.
       curlCommand += ' --header "Content-Length: 0"';
-      content.querySelector('#request').textContent = curlCommand;
     }
+    content.querySelector('#request').textContent = curlCommand;
 
     document.location.hash =
         self.serialize(self.computeState(false /* includeDefault */));
