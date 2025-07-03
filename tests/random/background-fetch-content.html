@@ -238,7 +238,7 @@
             var requests = [
               '/resources/icons/15.jpg',  // cat, 17644 bytes
               '/resources/random-cat-joke.php',  // text, 127 bytes through padding
-              'https://static.peter.sh/cors/1.png',  // CORS and allowed, 14093 bytes
+              'https://tests.peter.sh/cors/1.png',  // CORS and allowed, 14093 bytes
             ];
 
             var options = {};
@@ -248,7 +248,7 @@
               options.title = 'Aelurophile starter kit';
 
             if (crossOrigin.checked) {
-              requests.push('https://static.peter.sh/images/play-blue.png'); // CORS not allowed, 1242 bytes
+              requests.push('https://tests.peter.sh/images/play-blue.png'); // CORS not allowed, 1242 bytes
               downloadTotal += 1242;
             }
 
