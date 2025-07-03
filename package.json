@@ -4,8 +4,7 @@
   "description": "This was once the personal weblog of Peter Beverloo, but that hasn't really been the case for about a decade. Today, its main feature is the Chromium command line flag overview, which is periodically generated from Chromium's source code.",
   "scripts": {
     "build": "next build",
-    "build-prod": "docker build --build-arg PORT=4001 -t peter-sh",
-    "build-staging": "docker build --build-arg PORT=4002 -t peter-sh-staging",
+    "build-prod": "docker build --build-arg PORT=4001 -t peter-sh .",
     "serve": "next dev --turbo",
     "lint": "next lint"
   },
