@@ -1,0 +1,33 @@
+{
+  "name": "peter.sh",
+  "version": "2.0.0",
+  "description": "This was once the personal weblog of Peter Beverloo, but that hasn't really been the case for about a decade. Today, its main feature is the Chromium command line flag overview, which is periodically generated from Chromium's source code.",
+  "scripts": {
+    "build": "next build",
+    "build-prod": "docker build --build-arg PORT=4001 -t peter-sh",
+    "build-staging": "docker build --build-arg PORT=4002 -t peter-sh-staging",
+    "serve": "next dev --turbo",
+    "lint": "next lint"
+  },
+  "homepage": "https://github.com/beverloo/peter.sh#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beverloo/peter.sh.git"
+  },
+  "license": "MIT",
+  "author": "Peter Beverloo",
+  "dependencies": {
+    "next": "^15.3.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.10",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "eslint": "9.30.1",
+    "eslint-config-next": "15.3.4",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "typescript": "5.8.3"
+  }
+}

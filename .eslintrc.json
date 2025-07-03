@@ -1,0 +1,40 @@
+{
+    "extends": "next",
+    "plugins": [
+        "unused-imports"
+    ],
+    "rules": {
+        "eol-last": [ "error", "always" ],
+        "eqeqeq": [ "error", "always" ],
+        "indent": [ "error", 4, {
+            "ArrayExpression": "first",
+            "MemberExpression": "off",
+            "ObjectExpression": "first",
+            "SwitchCase": 1,
+            "VariableDeclarator": "first",
+            "ignoredNodes": [ "ConditionalExpression", "JSXAttribute" ]
+        } ],
+        "jsx-quotes": [ "error", "prefer-double" ],
+        "max-len": [ "error", {
+            "code": 100,
+            "ignorePattern": "^import .*",
+            "ignoreRegExpLiterals": true,
+            "ignoreUrls": true
+        }],
+        "no-tabs": "error",
+        "no-trailing-spaces": "error",
+        "no-var": "error",
+        "prefer-const": "warn",
+        "quotes": [ "error", "single" ],
+        "react/jsx-indent-props": "off",
+        "react/no-unescaped-entities": "off",
+        "unused-imports/no-unused-imports": "error",
+        "unused-imports/no-unused-vars": [
+            "warn",
+            {
+                "args": "none",
+                "caughtErrors": "none"
+            }
+        ]
+    }
+}
