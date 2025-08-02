@@ -18,6 +18,14 @@ export default async function RootPage() {
         return <TestsIndexPage />;
 
     return (
-        <p>Hello, world!</p>
+        <>
+            Hello, world.
+            <button className="btn btn-xl">Default</button>
+            <div className="card bg-base-200 card-border border-base-300 card-sm mt-4">
+                <div className="card-body gap-4">
+                    Hi
+                </div>
+            </div>
+        </>
     );
 }
