@@ -6,6 +6,7 @@
     "build": "next build",
     "build-prod": "docker build --build-arg PORT=4001 -t peter-sh .",
     "serve": "next dev --turbo",
+    "serve-tests": "cross-env APP_HOST_OVERRIDE=tests.peter.sh next dev --turbo",
     "lint": "next lint"
   },
   "homepage": "https://github.com/beverloo/peter.sh#readme",
@@ -24,6 +25,7 @@
     "@types/node": "24.1.0",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
+    "cross-env": "^10.0.0",
     "eslint": "9.32.0",
     "eslint-config-next": "15.4.5",
     "eslint-plugin-unused-imports": "^4.1.4",
