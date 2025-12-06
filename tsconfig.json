@@ -22,12 +22,20 @@
     "noImplicitOverride": true,
     "allowUnusedLabels": false,
     "erasableSyntaxOnly": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "paths": {
-      "@components/*": [ "components/*" ],
-      "@lib/*": [ "lib/*" ],
-      "@proxy/*": [ "components/proxy/*" ],
-      "@app/*": [ "*" ]
+      "@components/*": [
+        "components/*"
+      ],
+      "@lib/*": [
+        "lib/*"
+      ],
+      "@proxy/*": [
+        "components/proxy/*"
+      ],
+      "@app/*": [
+        "*"
+      ]
     },
     "plugins": [
       {
@@ -39,7 +47,8 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "app/**/*.ts",
-    "app/**/*.tsx"
+    "app/**/*.tsx",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

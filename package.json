@@ -17,19 +17,20 @@
   "license": "MIT",
   "author": "Peter Beverloo",
   "dependencies": {
-    "next": "^15.4.5",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "modern-normalize": "^3.0.1",
+    "next": "^16.0.7",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
-    "@types/node": "24.1.0",
-    "@types/react": "^19.1.9",
-    "@types/react-dom": "^19.1.7",
-    "cross-env": "^10.0.0",
-    "eslint": "9.32.0",
-    "eslint-config-next": "15.4.5",
-    "eslint-plugin-unused-imports": "^4.1.4",
-    "typescript": "5.9.2"
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "cross-env": "^10.1.0",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.0.7",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "typescript": "5.9.3"
   }
 }
