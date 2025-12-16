@@ -23,7 +23,7 @@ export default function Layout(props: React.PropsWithChildren) {
                 <Container disableGutters maxWidth="xl">
                     <BlogHeader />
                 </Container>
-                <Container disableGutters maxWidth="xl">
+                <Container disableGutters maxWidth="xl" sx={{ marginBottom: 'auto !important' }}>
                     {props.children}
                 </Container>
                 <Container disableGutters maxWidth="xl">

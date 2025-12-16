@@ -9,7 +9,6 @@ import { usePathname } from 'next/navigation';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Collapse from '@mui/material/Collapse';
 import Stack from '@mui/material/Stack';
 
 const kMenuItems = [
@@ -25,15 +24,15 @@ const kMenuItems = [
         label: 'Blog',
     },
     {
+        url: '/examples',
+        urlMatchMode: 'strict',
+        label: 'Experiments',
+    },
+    {
         url: '/about',
         urlMatchMode: 'prefix',
         label: 'About',
         header: true,
-    },
-    {
-        url: '/examples',
-        urlMatchMode: 'strict',
-        label: 'Experiments',
     },
 ];
 
@@ -92,7 +91,7 @@ export function BlogHeaderClient() {
                     xs: headerOpen ? '128px' : '48px',
                     sm: headerOpen ? '192px' : '80px',
                 },
-                transition: '0.3s ease-out height',
+                transition: '0.25s ease-out height',
             }} />
         </>
     );
