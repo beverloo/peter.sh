@@ -30,6 +30,19 @@ const kTheme = createTheme({
             },
         },
     },
+    typography: {
+        h1: { fontFamily: 'var(--font-header)' },
+        h2: { fontFamily: 'var(--font-header)' },
+        h3: { fontFamily: 'var(--font-header)' },
+        h4: { fontFamily: 'var(--font-header)' },
+        h5: { fontFamily: 'var(--font-header)' },
+        h6: { fontFamily: 'var(--font-header)' },
+
+        subtitle1: { fontFamily: 'var(--font-header)' },
+        subtitle2: { fontFamily: 'var(--font-header)' },
+
+        fontFamily: 'var(--font-text)',
+    },
 });
 
 export function ClientProviders(props: React.PropsWithChildren) {
