@@ -1,6 +1,7 @@
 // Copyright 2025 Peter Beverloo. All rights reserved.
 // Use of this source code is governed by a MIT license that can be found in the LICENSE file.
 
+import type { Metadata } from 'next';
 import { Noto_Sans, Noto_Serif } from 'next/font/google';
 
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
@@ -35,3 +36,8 @@ export default function RootLayout(props: React.PropsWithChildren) {
         </html>
     );
 }
+
+export const metadata: Metadata = {
+    title: 'Peter Beverloo',
+    robots: 'noindex',
+};

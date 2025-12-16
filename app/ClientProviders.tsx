@@ -18,7 +18,7 @@ const kTheme = createTheme({
         }
     },
     shape: {
-        borderRadius: 12,
+        borderRadius: 8,
     },
     typography: {
         h1: { fontFamily: 'var(--font-header)' },
@@ -40,8 +40,8 @@ export function ClientProviders(props: React.PropsWithChildren) {
         <ThemeProvider theme={kTheme}>
             <CssBaseline />
             <Box sx={{
-                    backgroundColor: '#121212',
-                    background: 'url(/images/bg-dark.png)',
+                backgroundColor: '#121212',
+                background: 'url(/images/bg-dark.png)',
             }}>
                 {props.children}
             </Box>

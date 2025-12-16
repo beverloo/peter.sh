@@ -16,7 +16,7 @@ export function BlogHeader() {
     return (
         <Stack component="header" direction="column" alignItems="stretch" spacing={2}>
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                <Typography variant="h4">
+                <Typography variant="h4" noWrap>
                     Peter Beverloo
                 </Typography>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -31,12 +31,7 @@ export function BlogHeader() {
                     </IconButton>
                 </Stack>
             </Stack>
-            <Stack component="nav" direction="row" spacing={2} sx={{
-                borderTop: '1px solid transparent',
-                borderTopColor: 'divider',
-            }}>
-                <BlogHeaderClient />
-            </Stack>
+            <BlogHeaderClient />
         </Stack>
     );
 }
