@@ -4,7 +4,6 @@
 import { Noto_Sans, Noto_Serif } from 'next/font/google';
 
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 
 import { ClientProviders } from './ClientProviders';
 
@@ -24,13 +23,11 @@ const kTextFont = Noto_Sans({
 
 export default function RootLayout(props: React.PropsWithChildren) {
     return (
-        <html lang="en" suppressHydrationWarning
-              className={`${kHeaderFont.variable} ${kTextFont.variable}`}>
+        <html lang="en" className={`${kHeaderFont.variable} ${kTextFont.variable}`}>
             <head></head>
             <body>
                 <AppRouterCacheProvider>
                     <ClientProviders>
-                        <InitColorSchemeScript attribute="class" />
                         {props.children}
                     </ClientProviders>
                 </AppRouterCacheProvider>
