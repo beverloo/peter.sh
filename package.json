@@ -17,7 +17,12 @@
   "license": "MIT",
   "author": "Peter Beverloo",
   "dependencies": {
-    "modern-normalize": "^3.0.1",
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.6",
+    "@mui/material-nextjs": "^7.3.6",
+    "@mui/system": "^7.3.6",
     "next": "^16.0.10",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
