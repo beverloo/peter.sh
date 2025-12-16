@@ -1,0 +1,27 @@
+name: Deploy peter.sh
+
+on: [ workflow_dispatch, push ]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy the site to production
+      uses: appleboy/ssh-action@v1.2.4
+      with:
+        host: ${{ secrets.HOST }}
+        port: ${{ secrets.PORT }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        command_timeout: 10m
+        script: |
+          cd ~/peter.sh
+          git reset --hard
+          git pull --rebase
+          npm install
+          npm run-script build-prod
+          docker system prune -f
+          docker stop peter-sh
+          docker rm peter-sh
+          docker run -d --name peter-sh --restart always -p 4001:4001 peter-sh:latest
