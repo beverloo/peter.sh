@@ -5,6 +5,13 @@ import type { NextConfig } from 'next'
  
 const nextConfig: NextConfig = {
     output: 'standalone',
+    redirects: () => ([
+        {
+            source: '/contact',
+            destination: '/about',
+            permanent: true,
+        },
+    ]),
 };
 
 export default nextConfig;

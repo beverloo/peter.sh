@@ -3,13 +3,14 @@
 
 import Link from '../ClientLink';
 
-import Divider from '@mui/material/Divider';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import IconButton from '@mui/material/IconButton';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import XIcon from '@mui/icons-material/X';
+
+import { BlogHeaderClient } from './BlogHeaderClient';
 
 export function BlogHeader() {
     return (
@@ -30,7 +31,12 @@ export function BlogHeader() {
                     </IconButton>
                 </Stack>
             </Stack>
-            <Divider flexItem />
+            <Stack component="nav" direction="row" spacing={2} sx={{
+                borderTop: '1px solid transparent',
+                borderTopColor: 'divider',
+            }}>
+                <BlogHeaderClient />
+            </Stack>
         </Stack>
     );
 }

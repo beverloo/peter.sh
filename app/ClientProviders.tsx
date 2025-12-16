@@ -23,12 +23,15 @@ const kTheme = createTheme({
         },
         dark: {
             palette: {
-                divider: '#643600',
+                divider: '#ff9f0a',
                 primary: {
                     main: '#ff9f0a',
                 }
             },
         },
+    },
+    shape: {
+        borderRadius: 12,
     },
     typography: {
         h1: { fontFamily: 'var(--font-header)' },
